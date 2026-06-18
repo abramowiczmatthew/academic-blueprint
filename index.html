@@ -1299,13 +1299,7 @@
       <p style="color: var(--muted);">The morning dopamine window — and how to use it before anything else can steal it from you.</p>
     </div>
 
-    <div class="video-placeholder">
-      <div class="upload-prompt">
-        <div class="upload-icon">🎬</div>
-        <p><span>Drop your video here</span> or click to upload</p>
-        <p style="font-size: 13px; margin-top: 4px;">Replace this with your Step 1 recording (8–12 min recommended)</p>
-      </div>
-    </div>
+    <div class="video-placeholder" id="freeLessonVideo"></div>
 
     <div class="lesson-content">
       <h3>What you'll learn in this lesson</h3>
@@ -1500,56 +1494,28 @@
       <div class="sidebar-section">
         <div class="sidebar-section-title">Module 1 — Productivity & Focus</div>
         <div class="sidebar-lesson active" onclick="loadLesson(1)">
-          <div class="lesson-status current">1</div>
-          <div class="lesson-info"><div class="lesson-title-s">Intro & The Compound Advantage</div><div class="lesson-dur">· · ·</div></div>
+          <div class="lesson-status current">▶</div>
+          <div class="lesson-info"><div class="lesson-title-s">Intro & The Compound Advantage</div><div class="lesson-dur">Free preview</div></div>
         </div>
-        <div class="sidebar-lesson" onclick="loadLesson(2)">
-          <div class="lesson-status todo">2</div>
-          <div class="lesson-info"><div class="lesson-title-s">The Mental Momentum Method (Part 1)</div><div class="lesson-dur">· · ·</div></div>
+        <div class="sidebar-lesson" id="dashLesson2" onclick="loadLesson(2)">
+          <div class="lesson-status locked" id="dashLesson2Status">🔒</div>
+          <div class="lesson-info"><div class="lesson-title-s">Wake Up & Flow — Step 1</div><div class="lesson-dur">Free with quiz</div></div>
         </div>
-        <div class="sidebar-lesson" onclick="loadLesson(3)">
-          <div class="lesson-status todo">3</div>
-          <div class="lesson-info"><div class="lesson-title-s">The Mental Momentum Method (Part 2)</div><div class="lesson-dur">· · ·</div></div>
+        <div class="sidebar-lesson locked" onclick="loadLesson(3)">
+          <div class="lesson-status locked">🔒</div>
+          <div class="lesson-info"><div class="lesson-title-s">Wake Up & Flow — Step 2</div><div class="lesson-dur">· · ·</div></div>
         </div>
-        <div class="sidebar-lesson" onclick="loadLesson(4)">
-          <div class="lesson-status todo">4</div>
-          <div class="lesson-info"><div class="lesson-title-s">Wake-Up-and-Flow System</div><div class="lesson-dur">· · ·</div></div>
+        <div class="sidebar-lesson locked" onclick="loadLesson(4)">
+          <div class="lesson-status locked">🔒</div>
+          <div class="lesson-info"><div class="lesson-title-s">Dopamine Control</div><div class="lesson-dur">· · ·</div></div>
         </div>
-        <div class="sidebar-lesson" onclick="loadLesson(5)">
-          <div class="lesson-status todo">5</div>
-          <div class="lesson-info"><div class="lesson-title-s">Flow State Optimization</div><div class="lesson-dur">· · ·</div></div>
+        <div class="sidebar-lesson locked" onclick="loadLesson(5)">
+          <div class="lesson-status locked">🔒</div>
+          <div class="lesson-info"><div class="lesson-title-s">How to Stop Procrastinating</div><div class="lesson-dur">· · ·</div></div>
         </div>
-        <div class="sidebar-lesson" onclick="loadLesson(6)">
-          <div class="lesson-status todo">6</div>
-          <div class="lesson-info"><div class="lesson-title-s">Dopamine Control Protocol</div><div class="lesson-dur">· · ·</div></div>
-        </div>
-        <div class="sidebar-lesson" onclick="loadLesson(7)">
-          <div class="lesson-status todo">7</div>
-          <div class="lesson-info"><div class="lesson-title-s">Energy Threshold Rule</div><div class="lesson-dur">· · ·</div></div>
-        </div>
-        <div class="sidebar-lesson" onclick="loadLesson(8)">
-          <div class="lesson-status todo">8</div>
-          <div class="lesson-info"><div class="lesson-title-s">Anti-Procrastination System</div><div class="lesson-dur">· · ·</div></div>
-        </div>
-        <div class="sidebar-lesson" onclick="loadLesson(9)">
-          <div class="lesson-status todo">9</div>
-          <div class="lesson-info"><div class="lesson-title-s">Friday Advantage Strategy</div><div class="lesson-dur">· · ·</div></div>
-        </div>
-        <div class="sidebar-lesson" onclick="loadLesson(10)">
-          <div class="lesson-status todo">10</div>
-          <div class="lesson-info"><div class="lesson-title-s">Weekend Advantage System</div><div class="lesson-dur">· · ·</div></div>
-        </div>
-        <div class="sidebar-lesson" onclick="loadLesson(11)">
-          <div class="lesson-status todo">11</div>
-          <div class="lesson-info"><div class="lesson-title-s">Environment & Consistency Systems</div><div class="lesson-dur">· · ·</div></div>
-        </div>
-        <div class="sidebar-lesson" onclick="loadLesson(12)">
-          <div class="lesson-status todo">12</div>
-          <div class="lesson-info"><div class="lesson-title-s">No Zero Days Framework</div><div class="lesson-dur">· · ·</div></div>
-        </div>
-        <div class="sidebar-lesson" onclick="loadLesson(13)">
-          <div class="lesson-status todo">13</div>
-          <div class="lesson-info"><div class="lesson-title-s">Self-Perception Advantage</div><div class="lesson-dur">· · ·</div></div>
+        <div class="sidebar-lesson locked" onclick="loadLesson(6)">
+          <div class="lesson-status locked">🔒</div>
+          <div class="lesson-info"><div class="lesson-title-s">No Zero Days & The Energy Rule</div><div class="lesson-dur">· · ·</div></div>
         </div>
       </div>
 
@@ -1725,12 +1691,7 @@
     <!-- Main content -->
     <div class="course-main">
       <div class="course-video-wrap" id="videoArea">
-        <div class="upload-prompt">
-          <div class="upload-icon">🎬</div>
-          <p><span>Paste your video URL here</span></p>
-          <p style="font-size: 13px; margin-top: 4px; color: var(--muted);">Upload to Vimeo/YouTube, then embed the link in the HTML</p>
-          <p style="font-size: 13px; margin-top: 4px; color: var(--muted);">See the setup guide below for instructions</p>
-        </div>
+        <iframe src="https://www.youtube.com/embed/jzVCjwI9Sjg" title="Intro — The Compound Advantage" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute; inset:0; width:100%; height:100%; border:0;"></iframe>
       </div>
 
       <div id="lessonMeta">
@@ -1756,6 +1717,8 @@ function showPage(id) {
   document.getElementById('page-' + id).classList.add('active');
   window.scrollTo(0, 0);
   if (id === 'quiz') initQuiz();
+  if (id === 'lesson') renderFreeLesson();
+  if (id === 'dashboard') initDashboard();
 }
 
 // ── QUIZ ENGINE ──
@@ -2171,6 +2134,7 @@ function showScore() {
     alert('Please enter a valid email address.');
     return;
   }
+  try { localStorage.setItem('abFreeLessonUnlocked', '1'); } catch (e) {} // unlock the free lesson
   document.getElementById('stepEmail').classList.remove('active');
   document.getElementById('stepScore').classList.add('active');
   updateProgress(questions.length + 2);
@@ -2279,33 +2243,73 @@ function showScore() {
 // ── DASHBOARD LESSON LOADER ──
 const lessonData = [
   null,
-  {title: "Intro — The Compound Advantage", meta: "Module 1 · Lesson 1 · 6 min", body: "Welcome to The Academic Blueprint. This intro covers the Compound Advantage — why stacking 14 small edges creates results that look impossible from the outside. Watch this first before any other module."},
-  {title: "Wake Up & Flow — Step 1", meta: "Module 1 · Lesson 2 · 10 min", body: "The morning dopamine window. Why scrolling costs you hours of focus. The exact Wake Up & Flow protocol: night-before prep, the no-phone rule, what to work on, and how to get into flow within minutes of waking."},
+  {video: "jzVCjwI9Sjg", title: "Intro — The Compound Advantage", meta: "Module 1 · Lesson 1 · 6 min", body: "Welcome to The Academic Blueprint. This intro covers the Compound Advantage — why stacking small edges creates results that look impossible from the outside. Watch this first before any other module."},
+  {video: "FaLLf86yfmw", title: "Wake Up & Flow — Step 1", meta: "Module 1 · Lesson 2 · 10 min", body: "The morning dopamine window. Why scrolling costs you hours of focus. The exact Wake Up & Flow protocol: night-before prep, the no-phone rule, what to work on, and how to get into flow within minutes of waking."},
   {title: "Wake Up & Flow — Step 2", meta: "Module 1 · Lesson 3 · 8 min", body: "Reset with Purpose — the dopamine recovery protocol. Cold exposure and the 250% dopamine spike. How to stack multiple productive sessions without crashing. The reset routine that rebuilds energy for the rest of your day."},
   {title: "Dopamine Control", meta: "Module 1 · Lesson 4 · 11 min", body: "How social media hijacks your dopamine and destroys your ability to focus. The dopamine detox protocol — what it is, when to do it, and how to do it without failing. Replacing fast dopamine with slow dopamine."},
   {title: "How to Stop Procrastinating", meta: "Module 1 · Lesson 5 · 9 min", body: "The real reason you procrastinate — and why willpower isn't the answer. The 5-minute rule, the phone break trick, and the best anti-procrastination tool you already have. Practical daily strategies that actually work."},
   {title: "No Zero Days & The Energy Rule", meta: "Module 1 · Lesson 6 · 8 min", body: "The No Zero Days rule done right — why it prevents burnout instead of causing it. The Energy Threshold Rule: when to stop studying and why stopping is sometimes the smarter move. Hard stop times and sleep consistency."},
 ];
 
+// Has the visitor finished the quiz? (remembered on their device)
+function abQuizDone() {
+  try { return localStorage.getItem('abFreeLessonUnlocked') === '1'; } catch (e) { return false; }
+}
+
+// Which dashboard lessons are accessible
+function isLessonUnlocked(n) {
+  if (n === 1) return true;          // Intro — free preview for everyone
+  if (n === 2) return abQuizDone();  // Wake Up & Flow Step 1 — free once the quiz is done
+  return false;                      // Everything else — part of the paid course
+}
+
+function ytEmbed(id, title) {
+  return `<iframe src="https://www.youtube.com/embed/${id}" title="${title}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute; inset:0; width:100%; height:100%; border:0;"></iframe>`;
+}
+
+function lockBox(heading, sub, btnLabel, btnPage) {
+  return `<div class="upload-prompt" style="padding:24px;"><div class="upload-icon">🔒</div><p style="font-weight:600;color:var(--white);">${heading}</p><p style="font-size:13px;margin-top:4px;">${sub}</p><button class="btn-primary" style="margin-top:16px;" onclick="showPage('${btnPage}')">${btnLabel}</button></div>`;
+}
+
 function loadLesson(n) {
-  if (n < 1 || n > 6) return;
+  if (n < 1 || n > 6 || !lessonData[n]) return;
   document.querySelectorAll('.sidebar-lesson').forEach((el, i) => {
     el.classList.toggle('active', i === n - 1);
   });
-  if (lessonData[n]) {
-    document.getElementById('lessonTitle').textContent = lessonData[n].title;
-    document.getElementById('lessonMeta2').textContent = lessonData[n].meta;
+  document.getElementById('lessonTitle').textContent = lessonData[n].title;
+  document.getElementById('lessonMeta2').textContent = lessonData[n].meta;
+
+  const video = document.getElementById('videoArea');
+  if (isLessonUnlocked(n)) {
     document.getElementById('lessonBody').innerHTML = '<p>' + lessonData[n].body + '</p>';
-    document.getElementById('videoArea').innerHTML = `
-      <div class="upload-prompt">
-        <div class="upload-icon">🎬</div>
-        <p><span>Video for: ${lessonData[n].title}</span></p>
-        <p style="font-size: 13px; margin-top: 4px; color: var(--muted);">Replace this div with an iframe embed from Vimeo or YouTube</p>
-        <p style="font-size: 13px; margin-top: 2px; color: var(--muted);">e.g. &lt;iframe src="https://vimeo.com/YOUR_ID"&gt;&lt;/iframe&gt;</p>
-      </div>
-    `;
+    video.innerHTML = lessonData[n].video
+      ? ytEmbed(lessonData[n].video, lessonData[n].title)
+      : `<div class="upload-prompt"><div class="upload-icon">🎬</div><p><span>Video for: ${lessonData[n].title}</span></p><p style="font-size:13px;margin-top:4px;color:var(--muted);">Add a YouTube link to this lesson and it'll play here.</p></div>`;
+  } else if (n === 2) {
+    document.getElementById('lessonBody').innerHTML = '<p>This is your free lesson — unlock it by taking the quick Academic Advantage Quiz.</p>';
+    video.innerHTML = lockBox('Take the quiz to unlock', 'Wake Up &amp; Flow — Step 1 is free once you finish the 2-minute quiz.', 'Take the Free Quiz →', 'quiz');
+  } else {
+    document.getElementById('lessonBody').innerHTML = '<p>This lesson is part of the full Academic Blueprint course.</p>';
+    video.innerHTML = lockBox('This lesson is locked', 'Get the full course to unlock all 5 modules.', 'Get the Full Blueprint →', 'sales');
   }
   window.scrollTo(0, 0);
+}
+
+// Update the dashboard's free-lesson lock icon when the dashboard opens
+function initDashboard() {
+  const s = document.getElementById('dashLesson2Status');
+  if (!s) return;
+  if (abQuizDone()) { s.className = 'lesson-status todo'; s.textContent = '2'; }
+  else { s.className = 'lesson-status locked'; s.textContent = '🔒'; }
+}
+
+// Render the free-lesson page — video if unlocked, lock prompt if not
+function renderFreeLesson() {
+  const el = document.getElementById('freeLessonVideo');
+  if (!el) return;
+  el.innerHTML = abQuizDone()
+    ? ytEmbed('FaLLf86yfmw', 'Wake Up & Flow — Step 1')
+    : lockBox('This free lesson unlocks after the quiz', 'Take the free 2-minute Academic Advantage Quiz to unlock Wake Up &amp; Flow — Step 1.', 'Take the Free Quiz →', 'quiz');
 }
 
 // ═══════════════════════════════════════════
