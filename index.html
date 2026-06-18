@@ -118,6 +118,7 @@
     cursor: pointer; transition: opacity 0.2s;
   }
   .btn-nav:hover { opacity: 0.85; }
+  .nav-burger { display: none; }
 
   /* ── PAGES ── */
   .page { display: none; min-height: 100vh; padding-top: 70px; }
@@ -620,6 +621,16 @@
   @media (max-width: 768px) {
     nav { padding: 16px 20px; }
     .nav-links { display: none; }
+    .nav-burger { display: block; background: none; border: none; color: var(--white); font-size: 24px; line-height: 1; cursor: pointer; padding: 4px 6px; }
+    .btn-nav { display: none; }
+    nav.open .nav-links {
+      display: flex; flex-direction: column; gap: 0;
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: rgba(8,12,21,0.97); backdrop-filter: blur(16px) saturate(140%);
+      border-bottom: 1px solid var(--border); padding: 6px 20px 14px;
+    }
+    nav.open .nav-links a { padding: 14px 2px; border-bottom: 1px solid var(--border); font-size: 15px; }
+    nav.open .nav-links a:last-child { border-bottom: none; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .stat-item { border-right: none; border-bottom: 1px solid var(--border); padding: 20px 0; }
     .stat-item:nth-child(2n) { border-right: none; }
@@ -938,6 +949,7 @@
     <a onclick="showPage('dashboard')">My Dashboard</a>
   </div>
   <button class="btn-nav" onclick="showPage('quiz')">Take the Free Quiz →</button>
+  <button class="nav-burger" aria-label="Open menu" onclick="toggleMenu()">☰</button>
 </nav>
 
 <!-- ═══════════════════════════════════════════ -->
@@ -990,7 +1002,7 @@
   <div class="section">
     <div class="container">
       <div class="quiz-teaser">
-        <div class="tag">Free — takes 90 seconds</div>
+        <div class="tag">Free — takes about 3 minutes</div>
         <h2>Take the Academic Advantage Quiz</h2>
         <p style="color: var(--muted); margin-top: 14px; font-size: 16px;">18 questions across every pillar of academic performance. Find out exactly where your system has gaps — and get a free lesson the moment you finish.</p>
         <div class="quiz-preview">
@@ -1139,6 +1151,7 @@
             <div class="adv-badge no">Most don't do this</div>
           </div>
         </div>
+        <p style="color: var(--muted); font-size: 14px; margin: 8px 0 20px;">And these are just 8 of <strong style="color:var(--white);">40+ proven systems</strong> inside the course — spanning focus, sleep, study methods, exam execution, and long-term habits.</p>
         <button class="btn-primary" style="margin-top: 8px;" onclick="showPage('quiz')">See your full score →</button>
       </div>
     </div>
@@ -1199,7 +1212,7 @@
   <div class="section">
     <div class="container" style="max-width: 720px;">
       <div class="footer-cta">
-        <div class="tag">Free — 90 seconds</div>
+        <div class="tag">Free — about 3 minutes</div>
         <h2>Take the Academic Advantage Quiz</h2>
         <p style="color: var(--muted); margin: 16px 0 8px;">Find out exactly where your system has gaps. Get your personalised Academic Advantage Score broken down by category — and unlock a free lesson the moment you finish.</p>
         <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:28px;flex-wrap:wrap;">
@@ -1236,7 +1249,7 @@
     <div style="text-align:center;margin-bottom:32px;">
       <div class="tag" style="margin-bottom:12px;">Academic Advantage Quiz · Free</div>
       <h2 style="font-size:clamp(1.4rem,3vw,2rem);margin-bottom:10px;">Find out where your system has gaps</h2>
-      <p style="color:var(--muted);font-size:14px;max-width:480px;margin:0 auto 16px;">18 questions across every pillar of academic performance. Takes 90 seconds. You'll get a personalised score and a free lesson at the end.</p>
+      <p style="color:var(--muted);font-size:14px;max-width:480px;margin:0 auto 16px;">18 questions across every pillar of academic performance. Takes about 3 minutes. You'll get a personalised score and a free lesson at the end.</p>
       <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;">
         <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;"><span style="color:var(--green);">✓</span> Personalised score breakdown</span>
         <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;"><span style="color:var(--green);">✓</span> Free lesson unlocked at the end</span>
@@ -1712,7 +1725,12 @@
 
 <script>
 // ── PAGE ROUTING ──
+function toggleMenu() {
+  document.querySelector('nav').classList.toggle('open');
+}
+
 function showPage(id) {
+  document.querySelector('nav').classList.remove('open'); // close mobile menu on navigate
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   window.scrollTo(0, 0);
@@ -2287,7 +2305,7 @@ function loadLesson(n) {
       : `<div class="upload-prompt"><div class="upload-icon">🎬</div><p><span>Video for: ${lessonData[n].title}</span></p><p style="font-size:13px;margin-top:4px;color:var(--muted);">Add a YouTube link to this lesson and it'll play here.</p></div>`;
   } else if (n === 2) {
     document.getElementById('lessonBody').innerHTML = '<p>This is your free lesson — unlock it by taking the quick Academic Advantage Quiz.</p>';
-    video.innerHTML = lockBox('Take the quiz to unlock', 'Wake Up &amp; Flow — Step 1 is free once you finish the 2-minute quiz.', 'Take the Free Quiz →', 'quiz');
+    video.innerHTML = lockBox('Take the quiz to unlock', 'Wake Up &amp; Flow — Step 1 is free once you finish the quick quiz.', 'Take the Free Quiz →', 'quiz');
   } else {
     document.getElementById('lessonBody').innerHTML = '<p>This lesson is part of the full Academic Blueprint course.</p>';
     video.innerHTML = lockBox('This lesson is locked', 'Get the full course to unlock all 5 modules.', 'Get the Full Blueprint →', 'sales');
@@ -2309,7 +2327,7 @@ function renderFreeLesson() {
   if (!el) return;
   el.innerHTML = abQuizDone()
     ? ytEmbed('FaLLf86yfmw', 'Wake Up & Flow — Step 1')
-    : lockBox('This free lesson unlocks after the quiz', 'Take the free 2-minute Academic Advantage Quiz to unlock Wake Up &amp; Flow — Step 1.', 'Take the Free Quiz →', 'quiz');
+    : lockBox('This free lesson unlocks after the quiz', 'Take the free Academic Advantage Quiz to unlock Wake Up &amp; Flow — Step 1.', 'Take the Free Quiz →', 'quiz');
 }
 
 // ═══════════════════════════════════════════
