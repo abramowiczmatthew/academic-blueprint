@@ -641,8 +641,8 @@
     .pricing-grid { grid-template-columns: 1fr; }
     .quiz-teaser { padding: 32px 24px; }
     .course-layout { grid-template-columns: 1fr; }
-    .course-sidebar { display: block; max-height: 45vh; border-right: none; border-bottom: 1px solid var(--border); }
-    .course-main { padding: 24px 20px; }
+    .course-main { padding: 24px 20px; order: 1; }
+    .course-sidebar { display: block; order: 2; max-height: none; overflow: visible; border-right: none; border-top: 1px solid var(--border); }
     .email-input-wrap { flex-direction: column; }
     footer-cta { padding: 40px 24px; }
   }
