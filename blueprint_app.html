@@ -508,6 +508,7 @@ function render(){
   bl.className='bedline';bl.innerHTML=`<span>BED ${fmt(bed)} · 9 HRS SLEEP</span>`;
   tl.appendChild(bl);
   renderCheckin(blocks);
+  persistLocal(); // save the schedule after every change so it survives a refresh
 }
 function renderWeeks(){
   const el=document.getElementById('weeks');el.innerHTML='';
