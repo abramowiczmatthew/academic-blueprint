@@ -7,7 +7,7 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
   :root{
-    --bg:#060911; --panel:#0C111D; --panel2:#121A2B;
+    --bg:#060911; --panel:rgba(16,23,38,.55); --panel2:rgba(20,28,46,.62);
     --grid:rgba(79,142,247,.05); --line:rgba(255,255,255,.10);
     --electric:#4F8EF7; --electricSoft:rgba(79,142,247,.14);
     --glow:0 0 18px rgba(79,142,247,.35);
@@ -18,7 +18,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-  body{background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+  body{min-height:100vh;position:relative}
   .wrap{max-width:880px;margin:0 auto;padding:20px 14px 90px}
   header{padding:14px 0 4px}
   .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;color:var(--electric);text-transform:uppercase}
@@ -129,9 +129,40 @@
   .toast.show{opacity:1}
   footer{margin-top:26px;color:var(--faint);font-size:11px;font-family:'JetBrains Mono',monospace;line-height:1.7}
   @media(max-width:560px){.timeline{padding-left:56px}.tmark{left:-56px;width:50px;font-size:9.5px}}
+
+  /* ── Ambient animated background + glow + glass (matches main site) ── */
+  .ak-bg{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden;
+    background:radial-gradient(1200px 700px at 50% -8%,rgba(79,142,247,.16),transparent 60%),
+      radial-gradient(900px 600px at 50% -4%,rgba(122,171,255,.10),transparent 55%),
+      linear-gradient(180deg,#070B15 0%,var(--bg) 38%,#04060C 100%)}
+  .ak-spot{position:absolute;top:-260px;left:50%;transform:translateX(-50%);width:1100px;height:760px;
+    background:radial-gradient(closest-side,rgba(120,165,255,.22),rgba(79,142,247,.06) 55%,transparent 72%);
+    filter:blur(8px);animation:ak-breathe 9s ease-in-out infinite}
+  @keyframes ak-breathe{0%,100%{opacity:.75;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.06)}}
+  .ak-aurora{position:absolute;inset:-25%;
+    background:radial-gradient(40% 35% at 30% 30%,rgba(79,142,247,.18),transparent 60%),
+      radial-gradient(35% 40% at 75% 25%,rgba(124,92,255,.14),transparent 60%),
+      radial-gradient(45% 45% at 60% 80%,rgba(52,140,201,.12),transparent 60%);
+    filter:blur(40px);animation:ak-drift 34s linear infinite}
+  @keyframes ak-drift{0%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(-3%,2%,0) rotate(180deg)}100%{transform:translate3d(0,0,0) rotate(360deg)}}
+  .ak-grid{position:absolute;inset:0;
+    background-image:linear-gradient(to right,rgba(120,160,230,.06) 1px,transparent 1px),linear-gradient(to bottom,rgba(120,160,230,.06) 1px,transparent 1px);
+    background-size:64px 64px;
+    -webkit-mask-image:radial-gradient(120% 80% at 50% 0%,#000 30%,transparent 78%);mask-image:radial-gradient(120% 80% at 50% 0%,#000 30%,transparent 78%)}
+  .ak-stars{position:absolute;inset:0;opacity:.5;
+    background-image:radial-gradient(1.4px 1.4px at 12% 18%,rgba(255,255,255,.7),transparent),radial-gradient(1.2px 1.2px at 28% 42%,rgba(180,205,255,.6),transparent),radial-gradient(1.6px 1.6px at 47% 12%,rgba(255,255,255,.55),transparent),radial-gradient(1.2px 1.2px at 63% 33%,rgba(200,220,255,.55),transparent),radial-gradient(1.5px 1.5px at 78% 20%,rgba(255,255,255,.6),transparent),radial-gradient(1.2px 1.2px at 88% 48%,rgba(180,205,255,.5),transparent),radial-gradient(1.3px 1.3px at 35% 70%,rgba(255,255,255,.45),transparent),radial-gradient(1.2px 1.2px at 70% 78%,rgba(200,220,255,.4),transparent);
+    -webkit-mask-image:radial-gradient(130% 90% at 50% 0%,#000 35%,transparent 80%);mask-image:radial-gradient(130% 90% at 50% 0%,#000 35%,transparent 80%);
+    animation:ak-twinkle 6s ease-in-out infinite}
+  @keyframes ak-twinkle{0%,100%{opacity:.5}50%{opacity:.78}}
+  h1 .glow{background:linear-gradient(100deg,#7AABFF 0%,#4F8EF7 35%,#A9C6FF 60%,#4F8EF7 85%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:none;animation:ak-shimmer 7s ease-in-out infinite}
+  @keyframes ak-shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .tab,.wk,.stat,.tb,.addform,.block,.checkin,.lbrow,.vietcard,.empty,.toast{backdrop-filter:blur(13px) saturate(140%);-webkit-backdrop-filter:blur(13px) saturate(140%)}
+  .stat,.block,.checkin,.lbrow{box-shadow:0 18px 40px -24px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.06)}
+  @media (prefers-reduced-motion: reduce){.ak-spot,.ak-aurora,.ak-stars,h1 .glow{animation:none!important}}
 </style>
 </head>
 <body>
+<div class="ak-bg" aria-hidden="true"><div class="ak-aurora"></div><div class="ak-grid"></div><div class="ak-stars"></div><div class="ak-spot"></div></div>
 <div class="wrap">
 <header>
   <div class="eyebrow">The Academic Blueprint</div>
@@ -192,6 +223,48 @@ ELEVATOR (10 MIN ROUND TRIP) ALREADY BUILT INTO GYM / BEACH / OUTDOOR BLOCKS
 
 </div>
 <div class="toast" id="toast"></div>
+
+<!-- ================= Acadava backend (Firebase) ================= -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+/* ▼▼▼ PASTE YOUR FIREBASE CONFIG BETWEEN THE BRACES (see setup steps) ▼▼▼ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAR8f6Y2ofGvNEdaijwj9oj3JkZcwnFBA4",
+  authDomain: "acadava.firebaseapp.com",
+  projectId: "acadava",
+  storageBucket: "acadava.firebasestorage.app",
+  messagingSenderId: "1095037683611",
+  appId: "1:1095037683611:web:f61f2d8dc5e7b27e45433e",
+  measurementId: "G-2GT2TG44QT"
+};
+/* ▲▲▲ nothing else to change ▲▲▲ */
+
+let db = null;
+try {
+  if (FIREBASE_CONFIG && FIREBASE_CONFIG.projectId && window.firebase) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+  }
+} catch (e) { console.warn('Acadava: Firebase not ready —', e); }
+
+/* window.storage shim: personal data → this device (localStorage); shared leaderboard → Firebase */
+const _encKey = k => encodeURIComponent(k).replace(/[.#$/\[\]]/g, '_');
+window.storage = {
+  async set(key, value, shared = false) {
+    if (shared && db) { try { await db.collection('acadava_lb').doc(_encKey(key)).set({ key, value }); } catch (e) {} return; }
+    try { localStorage.setItem('acadava:' + key, value); } catch (e) {}
+  },
+  async get(key, shared = false) {
+    if (shared && db) { try { const d = await db.collection('acadava_lb').doc(_encKey(key)).get(); return d.exists ? { value: d.data().value } : null; } catch (e) { return null; } }
+    try { const v = localStorage.getItem('acadava:' + key); return v != null ? { value: v } : null; } catch (e) { return null; }
+  },
+  async list(prefix, shared = false) {
+    if (shared && db) { try { const s = await db.collection('acadava_lb').get(); return { keys: s.docs.map(d => d.data().key) }; } catch (e) { return { keys: [] }; } }
+    return { keys: [] };
+  }
+};
+</script>
 
 <script>
 /* ================= categories ================= */
