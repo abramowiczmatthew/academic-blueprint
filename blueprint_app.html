@@ -165,9 +165,10 @@
 <div class="ak-bg" aria-hidden="true"><div class="ak-aurora"></div><div class="ak-grid"></div><div class="ak-stars"></div><div class="ak-spot"></div></div>
 <div class="wrap">
 <header>
-  <div class="eyebrow">The Academic Blueprint</div>
-  <h1>Schedule <span class="glow">&amp; Streaks</span></h1>
-  <div class="sub">Time-block your week. Verify your days. Stack hours against your friends.</div>
+  <img src="acadava-logo.png" alt="Acadava" style="height:56px;width:auto;display:block;margin-bottom:10px;filter:drop-shadow(0 0 16px rgba(79,142,247,.45));">
+  <div class="eyebrow">The Academic Blueprint · For Griffith Students</div>
+  <h1>Acadava <span class="glow">— Schedule &amp; Streaks</span></h1>
+  <div class="sub">Time-block your week, verify your days, and climb the ranks. Built around the Griffith semester weeks.</div>
 </header>
 
 <div class="tabs">
@@ -186,7 +187,8 @@
     <button class="tb primary" onclick="toggleAdd()">+ Add block</button>
     <button class="tb" onclick="applyAllWeeks()">Apply this week → all weeks</button>
     <button class="tb ghost" onclick="resetDay()">Reset day</button>
-    <button class="tb ghost" onclick="resetAll()">Reset everything</button>
+    <button class="tb ghost" onclick="resetAll()">Reset to Matthew's default</button>
+    <button class="tb ghost" onclick="buildMyOwn()">🧹 Build my own (clear all)</button>
   </div>
 
   <div class="addform" id="addform">
@@ -196,6 +198,7 @@
       <option value="30">30 min</option><option value="60">1 hr</option>
       <option value="90">1.5 hr</option><option value="120" selected>2 hr</option>
     </select>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);cursor:pointer"><input type="checkbox" id="af_lock"> 🔒 Locked class</label>
     <button class="tb primary" onclick="confirmAdd()">Add — then drag it into place</button>
   </div>
 
@@ -397,7 +400,7 @@ const WEEKS=[
 const DAYNAMES=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 /* ================= state ================= */
-let state={}, checkins={}, myName='', curW=0, curD=0, curTab='sched', dragIdx=null;
+let state={}, checkins={}, myName='', curW=0, curD=0, curTab='sched', dragIdx=null, bedtimes={};
 function freshDay(w,d){return WEEKS[w].days[d].map(b=>({...b,id:'b'+(uid++)}));}
 function ensure(w,d){ if(!state[w])state[w]={}; if(!state[w][d])state[w][d]=freshDay(w,d); return state[w][d]; }
 function dateOf(w,d){const dt=new Date(WEEKS[w].start+'T00:00:00');dt.setDate(dt.getDate()+d);return dt;}
@@ -427,6 +430,9 @@ function repack(blocks,dayStart){
   }
 }
 function dayStartFor(d){return d>=5?420:360;} /* weekends wake 7:00 AM */
+function bedFor(d){return (bedtimes[d]!=null)?bedtimes[d]:BED[d];}
+function hhmm(m){const h=Math.floor(m/60)%24,mm=m%60;return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
+function setBedtime(d,val){const p=String(val||'').split(':');const h=parseInt(p[0],10),mm=parseInt(p[1],10);if(isNaN(h)||isNaN(mm))return;bedtimes[d]=h*60+mm;persistLocal();render();toast('Bedtime updated');}
 
 /* ================= render ================= */
 function setTab(t){curTab=t;
@@ -450,7 +456,7 @@ function render(){
   }
   document.querySelector('.toolbar').style.display='flex';
   document.getElementById('checkin').style.display='block';
-  const blocks=ensure(curW,curD),bed=BED[curD];
+  const blocks=ensure(curW,curD),bed=bedFor(curD);
   const study=blocks.filter(b=>b.cat==='STUDY').reduce((a,b)=>a+b.d,0);
   const cls=blocks.filter(b=>b.cat==='CLASS').reduce((a,b)=>a+b.d,0);
   const end=blocks.length?blocks[blocks.length-1].t+blocks[blocks.length-1].d:0;
@@ -458,7 +464,8 @@ function render(){
   sm.innerHTML=`
     <div class="stat"><b>${(study/60).toFixed(1)}h</b><span>Study</span></div>
     <div class="stat"><b>${(cls/60).toFixed(1)}h</b><span>Class</span></div>
-    <div class="stat ${over?'warn':''}"><b>${fmt(end)}</b><span>Day ends · bed ${fmt(bed)}</span></div>`;
+    <div class="stat ${over?'warn':''}"><b>${fmt(end)}</b><span>Day ends</span></div>
+    <div class="stat"><input type="time" value="${hhmm(bed)}" onchange="setBedtime(${curD},this.value)" style="background:transparent;border:none;color:var(--electric);font-family:'JetBrains Mono',monospace;font-size:16px;width:100%;padding:0;cursor:pointer"><span>Bedtime · tap to change</span></div>`;
   const hasConflict=blocks.some(b=>b.conflict);
   warn.classList.toggle('show',over||hasConflict);
   warn.textContent=over?`⚠ This day runs past your ${fmt(bed)} bedtime — trim or delete something to protect your 9 hours.`
@@ -478,6 +485,7 @@ function render(){
       <div class="bmeta">${b.d} min · ${CATS[b.cat].n}</div>
       ${b.locked?`
       <div class="ctrl">
+        <button class="tb ghost" style="font-size:11px;padding:5px 11px" onclick="renameBlock(${i})">✎ Rename</button>
         <button class="tb ghost" style="font-size:11px;padding:5px 11px" onclick="toggleLock(${i})">🔓 Unlock to move</button>
       </div>`:`
       <div class="ctrl">
@@ -490,6 +498,7 @@ function render(){
         <select class="catsel" onchange="setCat(${i},this.value)">
           ${PICKABLE.map(c=>`<option value="${c}" ${b.cat===c?'selected':''}>${CATS[c].n}</option>`).join('')}
         </select>
+        <button class="btn" title="Rename" onclick="renameBlock(${i})" style="width:auto;padding:0 6px">✎</button>
         ${b.cat==='CLASS'?`<button class="tb ghost" style="font-size:11px;padding:5px 9px" onclick="toggleLock(${i})">🔒 Lock</button>`:''}
         <button class="del" onclick="removeBlock(${i})">delete</button>
       </div>`}`;
@@ -571,17 +580,35 @@ function dropMove(from,to){
 function toggleAdd(){document.getElementById('addform').classList.toggle('show');}
 function confirmAdd(){
   const label=document.getElementById('af_label').value.trim()||'Study block';
-  const cat=document.getElementById('af_cat').value;
+  const locked=document.getElementById('af_lock').checked;
+  const cat=locked?'CLASS':document.getElementById('af_cat').value;
   const dur=parseInt(document.getElementById('af_dur').value,10);
   const blocks=ensure(curW,curD);
   let idx=blocks.findIndex(b=>b.cat==='WIND');if(idx<0)idx=blocks.length;
-  blocks.splice(idx,0,B(0,dur,label,cat));
+  const nb=B(0,dur,label,cat,false);
+  blocks.splice(idx,0,nb);
   repack(blocks,dayStartFor(curD));
+  if(locked)nb.locked=true; /* lock it at its flowed time — unlock later to move */
+  document.getElementById('af_lock').checked=false;
   document.getElementById('addform').classList.remove('show');
-  render();toast('Added — drag ⠿ to put it where you want');
+  render();toast(locked?'Locked class added — tap 🔓 Unlock to reposition it':'Added — drag ⠿ to put it where you want');
+}
+function renameBlock(i){
+  const blocks=ensure(curW,curD);
+  const v=prompt('Rename this block:',blocks[i].label);
+  if(v!=null&&v.trim()){blocks[i].label=v.trim();render();toast('Renamed');}
 }
 function resetDay(){if(state[curW])delete state[curW][curD];render();toast('Day reset');}
-function resetAll(){state={};render();toast('Everything reset to default');}
+function resetAll(){
+  if(!confirm("Reset everything back to Matthew's default schedule?\n\nThis erases all your changes on this device."))return;
+  state={};bedtimes={};render();toast("Reset to Matthew's default");
+}
+function buildMyOwn(){
+  if(!confirm('Clear the schedule and start with a blank week you build yourself?\n\nThis erases the current schedule on this device — you keep your class times by adding them back with the 🔒 Locked class option.'))return;
+  state={};bedtimes={};
+  WEEKS.forEach((w,i)=>{ if(w.vietnam)return; state[i]={}; for(let d=0;d<7;d++)state[i][d]=[]; });
+  render();toast('Cleared — build your own with + Add block');
+}
 function applyAllWeeks(){
   const src={};
   for(let d=0;d<7;d++)src[d]=ensure(curW,d).map(b=>({...b}));
@@ -717,14 +744,14 @@ async function renderLb(){
 async function persistLocal(){
   try{
     if(!window.storage)return;
-    await window.storage.set('bp-state',JSON.stringify({state,checkins,myName}));
+    await window.storage.set('bp-state',JSON.stringify({state,checkins,myName,bedtimes}));
   }catch(e){}
 }
 async function loadLocal(){
   try{
     if(!window.storage)return;
     const r=await window.storage.get('bp-state');
-    if(r&&r.value){const o=JSON.parse(r.value);state=o.state||{};checkins=o.checkins||{};myName=o.myName||'';}
+    if(r&&r.value){const o=JSON.parse(r.value);state=o.state||{};checkins=o.checkins||{};myName=o.myName||'';bedtimes=o.bedtimes||{};}
   }catch(e){}
 }
 function toast(msg){
