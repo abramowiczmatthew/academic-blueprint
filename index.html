@@ -897,6 +897,30 @@
     .ak-reveal { transition: none; opacity: 1; transform: none; }
     * { scroll-behavior: auto; }
   }
+
+  /* ── Login / signup modal ── */
+  .nav-auth-link { font-size: 14px; color: var(--muted); text-decoration: none; cursor: pointer; white-space: nowrap; transition: color .2s; }
+  .nav-auth-link:hover { color: var(--white); }
+  .auth-modal { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; background: rgba(4,7,13,.72); backdrop-filter: blur(8px); padding: 20px; }
+  .auth-modal.open { display: flex; }
+  .auth-card { width: 100%; max-width: 400px; background: var(--glass-2); border: 1px solid var(--glass-brd); border-radius: 18px; padding: 32px 28px; box-shadow: 0 30px 80px -30px rgba(0,0,0,.9), var(--hi); position: relative; backdrop-filter: blur(16px) saturate(140%); }
+  .auth-close { position: absolute; top: 12px; right: 16px; background: none; border: none; color: var(--muted); font-size: 26px; cursor: pointer; line-height: 1; }
+  .auth-logo { font-family: var(--display); font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--white); margin-bottom: 14px; }
+  .auth-logo span { color: var(--accent); }
+  .auth-card h2 { font-family: var(--display); font-size: 24px; margin-bottom: 6px; }
+  .auth-sub { color: var(--muted); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+  .auth-input { width: 100%; background: rgba(10,15,26,.6); border: 1px solid var(--glass-brd); border-radius: 10px; padding: 13px 15px; color: var(--white); font-size: 15px; font-family: inherit; margin-bottom: 12px; outline: none; transition: border-color .2s, box-shadow .2s; }
+  .auth-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(79,142,247,.18); }
+  .auth-google { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: #fff; color: #1f2430; border: none; border-radius: 10px; padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 16px; transition: opacity .2s; }
+  .auth-google:hover { opacity: .9; }
+  .auth-google span { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: #4285F4; color: #fff; font-weight: 700; font-size: 13px; }
+  .auth-or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; margin-bottom: 16px; }
+  .auth-or::before, .auth-or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .auth-error { color: var(--red); font-size: 13px; min-height: 18px; margin-bottom: 8px; line-height: 1.4; }
+  .auth-foot { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; font-size: 13px; }
+  .auth-foot a { color: var(--muted); cursor: pointer; text-decoration: none; }
+  .auth-foot a:hover { color: var(--accent); }
+  @media (max-width: 768px) { .nav-auth-link { display: none; } }
 </style>
 </head>
 <body>
@@ -948,10 +972,33 @@
     <a onclick="showPage('quiz')">Take the Quiz</a>
     <a onclick="showPage('dashboard')">My Dashboard</a>
     <a onclick="showPage('acadava')">Acadava</a>
+    <a id="navAuthLinkM" onclick="onAuthClick()">Log in</a>
   </div>
   <button class="btn-nav" onclick="showPage('quiz')">Discover What’s Holding You Back →</button>
+  <a class="nav-auth-link" id="navAuthLink" onclick="onAuthClick()">Log in</a>
   <button class="nav-burger" aria-label="Open menu" onclick="toggleMenu()">☰</button>
 </nav>
+
+<!-- LOGIN / SIGNUP MODAL -->
+<div id="authModal" class="auth-modal">
+  <div class="auth-card">
+    <button class="auth-close" onclick="closeAuth()" aria-label="Close">×</button>
+    <div class="auth-logo">The Academic <span>Blueprint</span></div>
+    <h2 id="authTitle">Log in</h2>
+    <p class="auth-sub" id="authSub">Log in to your account.</p>
+    <button class="auth-google" onclick="doGoogle()"><span>G</span> Continue with Google</button>
+    <div class="auth-or"><span>or</span></div>
+    <div id="authUserRow" style="display:none"><input id="authUsername" class="auth-input" type="text" placeholder="Choose a username" autocomplete="username"></div>
+    <input id="authEmail" class="auth-input" type="email" placeholder="Email" autocomplete="email">
+    <input id="authPass" class="auth-input" type="password" placeholder="Password" autocomplete="current-password">
+    <div id="authError" class="auth-error"></div>
+    <button class="btn-primary" style="width:100%" id="authSubmit" onclick="submitAuth()">Log in</button>
+    <div class="auth-foot">
+      <a id="authToggle" onclick="toggleAuthMode()">New here? Create a free account</a>
+      <a id="authForgot" onclick="doForgot()">Forgot password?</a>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════ -->
 <!--  LANDING PAGE                              -->
@@ -1731,13 +1778,124 @@
   <iframe src="blueprint_app.html" title="Acadava — Schedule & Streaks" style="width:100%; height:calc(100vh - 70px); border:0; display:block;"></iframe>
 </div>
 
+<!-- ===== Firebase (accounts + login) ===== -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAR8f6Y2ofGvNEdaijwj9oj3JkZcwnFBA4",
+  authDomain: "acadava.firebaseapp.com",
+  projectId: "acadava",
+  storageBucket: "acadava.firebasestorage.app",
+  messagingSenderId: "1095037683611",
+  appId: "1:1095037683611:web:f61f2d8dc5e7b27e45433e",
+  measurementId: "G-2GT2TG44QT"
+};
+let auth=null, fdb=null;
+try{ firebase.initializeApp(FIREBASE_CONFIG); auth=firebase.auth(); fdb=firebase.firestore(); }
+catch(e){ console.warn('Auth init failed', e); }
+</script>
+
 <script>
 // ── PAGE ROUTING ──
 function toggleMenu() {
   document.querySelector('nav').classList.toggle('open');
 }
 
+// ── ACCOUNTS / LOGIN ──
+let currentUser = null, userProfile = null, authMode = 'login', pendingPage = null;
+
+function openAuth(mode, sub) { setAuthMode(mode || 'login', sub); document.getElementById('authModal').classList.add('open'); }
+function closeAuth() { document.getElementById('authModal').classList.remove('open'); }
+function onAuthClick() { if (currentUser) doLogout(); else openAuth('login'); }
+function toggleAuthMode() { setAuthMode(authMode === 'signup' ? 'login' : 'signup'); }
+function authErr(m, ok) { const e = document.getElementById('authError'); e.style.color = ok ? 'var(--green)' : 'var(--red)'; e.textContent = m || ''; }
+function setAuthMode(mode, sub) {
+  authMode = mode; const signup = mode === 'signup';
+  authErr('');
+  document.getElementById('authTitle').textContent = signup ? 'Create your free account' : 'Log in';
+  document.getElementById('authSub').textContent = sub || (signup ? 'Free to use Acadava. Same account upgrades to the full course when you buy.' : 'Log in to use Acadava and your course.');
+  document.getElementById('authUserRow').style.display = signup ? 'block' : 'none';
+  document.getElementById('authSubmit').textContent = signup ? 'Create account' : 'Log in';
+  document.getElementById('authToggle').textContent = signup ? 'Already have an account? Log in' : 'New here? Create a free account';
+  document.getElementById('authForgot').style.display = signup ? 'none' : 'inline';
+  document.getElementById('authPass').setAttribute('autocomplete', signup ? 'new-password' : 'current-password');
+}
+async function submitAuth() {
+  if (!auth) { authErr('Login isn’t available right now.'); return; }
+  const email = document.getElementById('authEmail').value.trim();
+  const pass = document.getElementById('authPass').value;
+  if (!email || !pass) { authErr('Enter your email and password.'); return; }
+  try {
+    if (authMode === 'signup') {
+      const uname = document.getElementById('authUsername').value.trim();
+      if (uname.length < 3) { authErr('Pick a username (3+ characters).'); return; }
+      const cred = await auth.createUserWithEmailAndPassword(email, pass);
+      await cred.user.updateProfile({ displayName: uname });
+      await createProfile(cred.user, uname);
+    } else {
+      await auth.signInWithEmailAndPassword(email, pass);
+    }
+    closeAuth();
+  } catch (e) { authErr(prettyAuthError(e)); }
+}
+async function doGoogle() {
+  if (!auth) { authErr('Login isn’t available right now.'); return; }
+  try { const res = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); await ensureProfile(res.user); closeAuth(); }
+  catch (e) { authErr(prettyAuthError(e)); }
+}
+async function doForgot() {
+  const email = document.getElementById('authEmail').value.trim();
+  if (!email) { authErr('Type your email above first, then tap Forgot password.'); return; }
+  try { await auth.sendPasswordResetEmail(email); authErr('Reset link sent — check your email.', true); }
+  catch (e) { authErr(prettyAuthError(e)); }
+}
+async function doLogout() { try { await auth.signOut(); } catch (e) {} }
+async function createProfile(user, uname) {
+  if (!fdb) return;
+  try { await fdb.collection('users').doc(user.uid).set({ username: uname, email: user.email || '', plan: 'free', createdAt: Date.now() }, { merge: true }); } catch (e) {}
+}
+async function ensureProfile(user) {
+  if (!fdb) return;
+  try {
+    const ref = fdb.collection('users').doc(user.uid), snap = await ref.get();
+    if (!snap.exists) await ref.set({ username: user.displayName || ('user' + user.uid.slice(0, 5)), email: user.email || '', plan: 'free', createdAt: Date.now() });
+  } catch (e) {}
+}
+async function loadProfile(user) {
+  if (!fdb) return null;
+  try { const s = await fdb.collection('users').doc(user.uid).get(); return s.exists ? s.data() : null; } catch (e) { return null; }
+}
+function prettyAuthError(e) {
+  const c = (e && e.code) || '';
+  if (c.includes('email-already-in-use')) return 'That email already has an account — log in instead.';
+  if (c.includes('invalid-email')) return 'That email doesn’t look right.';
+  if (c.includes('weak-password')) return 'Password must be at least 6 characters.';
+  if (c.includes('wrong-password') || c.includes('invalid-credential') || c.includes('invalid-login')) return 'Wrong email or password.';
+  if (c.includes('user-not-found')) return 'No account with that email — create one below.';
+  if (c.includes('popup-closed') || c.includes('cancelled-popup')) return '';
+  if (c.includes('operation-not-allowed')) return 'This sign-in method isn’t enabled yet in Firebase.';
+  return (e && e.message) || 'Something went wrong — try again.';
+}
+function isPaid() { return !!(userProfile && userProfile.plan === 'paid'); }
+function updateAuthUI() {
+  const label = currentUser ? ('Log out (' + ((userProfile && userProfile.username) || currentUser.displayName || 'account') + ')') : 'Log in';
+  ['navAuthLink', 'navAuthLinkM'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = label; });
+}
+if (auth) {
+  auth.onAuthStateChanged(async (u) => {
+    currentUser = u;
+    if (u) { await ensureProfile(u); userProfile = await loadProfile(u); } else { userProfile = null; }
+    updateAuthUI();
+    const dash = document.getElementById('page-dashboard');
+    if (dash && dash.classList.contains('active') && typeof loadLesson === 'function') loadLesson(1);
+    if (u && pendingPage) { const p = pendingPage; pendingPage = null; showPage(p); }
+  });
+}
+
 function showPage(id) {
+  if (id === 'acadava' && !currentUser) { pendingPage = 'acadava'; openAuth('login', 'Log in or create a free account to use Acadava.'); return; }
   document.querySelector('nav').classList.remove('open'); // close mobile menu on navigate
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
@@ -1745,6 +1903,12 @@ function showPage(id) {
   if (id === 'quiz') initQuiz();
   if (id === 'lesson') renderFreeLesson();
   if (id === 'dashboard') initDashboard();
+  if (id === 'acadava') {
+    const f = document.querySelector('#page-acadava iframe');
+    const uname = (userProfile && userProfile.username) || (currentUser && currentUser.displayName) || '';
+    const want = 'blueprint_app.html' + (uname ? ('?user=' + encodeURIComponent(uname)) : '');
+    if (f && f.getAttribute('src') !== want) f.setAttribute('src', want);
+  }
 }
 
 // ── QUIZ ENGINE ──
@@ -2286,7 +2450,7 @@ function abQuizDone() {
 function isLessonUnlocked(n) {
   if (n === 1) return true;          // Intro — free preview for everyone
   if (n === 2) return abQuizDone();  // Wake Up & Flow Step 1 — free once the quiz is done
-  return false;                      // Everything else — part of the paid course
+  return isPaid();                   // Everything else — unlocked once the account is on the paid plan
 }
 
 function ytEmbed(id, title) {

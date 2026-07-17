@@ -406,27 +406,30 @@ const WEEKS=[
 const DAYNAMES=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 /* ================= state ================= */
-let state={}, checkins={}, myName='', curW=0, curD=0, curTab='sched', dragIdx=null, bedtimes={};
+let state={}, checkins={}, myName='', curW=0, curD=0, curTab='sched', dragIdx=null, bedtimes={}, starts={}, accountName=null;
+const POMO_SWITCH=14*60; /* after 2:00 PM, default study switches to shorter 25/5 cycles */
 function pomodorizeBlock(b){
   if(b.cat!=='STUDY' || b.d<60) return [b];
-  const S=50,Bk=10,segs=[]; let rem=b.d;
+  const late=b.t>=POMO_SWITCH;
+  const S=late?25:50, Bk=late?5:10, gname=late?'25/5 Pomodoro':'50/10 Pomodoro';
+  const segs=[]; let rem=b.d;
   while(rem>0){
     if(rem<=S+Bk){ segs.push(['STUDY',rem,'Study · '+rem+' min']); rem=0; }
-    else { segs.push(['STUDY',S,'Study · 50 min (phone-free)']); rem-=S; segs.push(['BREAK',Bk,'Break · 10 min']); rem-=Bk; }
+    else { segs.push(['STUDY',S,'Study · '+S+' min'+(late?'':' (phone-free)')]); rem-=S; segs.push(['BREAK',Bk,'Break · '+Bk+' min']); rem-=Bk; }
   }
   if(segs.length<2) return [b];
-  const g='pg'+(uid++),gname='50/10 Pomodoro';
+  const g='pg'+(uid++);
   return segs.map(s=>{const nb=B(b.t,s[1],s[2],s[0]);nb.grp=g;nb.gname=gname;return nb;});
 }
 function freshDay(w,d){
   const out=[];
   WEEKS[w].days[d].forEach(b=>{ pomodorizeBlock({...b,id:'b'+(uid++)}).forEach(p=>out.push(p)); });
-  repack(out,dayStartFor(d));
+  repack(out,startFor(d));
   return out;
 }
 function ensure(w,d){ if(!state[w])state[w]={}; if(!state[w][d])state[w][d]=freshDay(w,d); return state[w][d]; }
 function dateOf(w,d){const dt=new Date(WEEKS[w].start+'T00:00:00');dt.setDate(dt.getDate()+d);return dt;}
-function iso(dt){return dt.toISOString().slice(0,10);}
+function iso(dt){const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,'0'),d=String(dt.getDate()).padStart(2,'0');return `${y}-${m}-${d}`;} /* local date — avoids UTC off-by-one in AU timezone */
 
 /* AM/PM formatting */
 function fmt(m){
@@ -455,6 +458,8 @@ function dayStartFor(d){return d>=5?420:360;} /* weekends wake 7:00 AM */
 function bedFor(d){return (bedtimes[d]!=null)?bedtimes[d]:BED[d];}
 function hhmm(m){const h=Math.floor(m/60)%24,mm=m%60;return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
 function setBedtime(d,val){const p=String(val||'').split(':');const h=parseInt(p[0],10),mm=parseInt(p[1],10);if(isNaN(h)||isNaN(mm))return;bedtimes[d]=h*60+mm;persistLocal();render();toast('Bedtime updated');}
+function startFor(d){return (starts[d]!=null)?starts[d]:dayStartFor(d);}
+function setStart(d,val){const p=String(val||'').split(':');const h=parseInt(p[0],10),mm=parseInt(p[1],10);if(isNaN(h)||isNaN(mm))return;starts[d]=h*60+mm;const blocks=ensure(curW,d);repack(blocks,starts[d]);persistLocal();render();toast('Start time updated');}
 
 /* ================= render ================= */
 function setTab(t){curTab=t;
@@ -486,6 +491,7 @@ function render(){
   sm.innerHTML=`
     <div class="stat"><b>${(study/60).toFixed(1)}h</b><span>Study</span></div>
     <div class="stat"><b>${(cls/60).toFixed(1)}h</b><span>Class</span></div>
+    <div class="stat"><input type="time" value="${hhmm(startFor(curD))}" onchange="setStart(${curD},this.value)" style="background:transparent;border:none;color:var(--electric);font-family:'JetBrains Mono',monospace;font-size:16px;width:100%;padding:0;cursor:pointer"><span>Day starts · tap to change</span></div>
     <div class="stat ${over?'warn':''}"><b>${fmt(end)}</b><span>Day ends</span></div>
     <div class="stat"><input type="time" value="${hhmm(bed)}" onchange="setBedtime(${curD},this.value)" style="background:transparent;border:none;color:var(--electric);font-family:'JetBrains Mono',monospace;font-size:16px;width:100%;padding:0;cursor:pointer"><span>Bedtime · tap to change</span></div>`;
   const hasConflict=blocks.some(b=>b.conflict);
@@ -596,12 +602,12 @@ function toggleLock(i){
   const blocks=ensure(curW,curD);
   blocks[i].locked=!blocks[i].locked;
   if(blocks[i].locked)blocks[i].conflict=false;
-  repack(blocks,dayStartFor(curD));
+  repack(blocks,startFor(curD));
   render();persistLocal();
   toast(blocks[i].locked?'Locked back in place':'Unlocked — drag ⠿ or use ↑ ↓ to move it (e.g. to a 9 AM session)');
 }
 function setCat(i,cat){const blocks=ensure(curW,curD);blocks[i].cat=cat;render();}
-function removeBlock(i){const blocks=ensure(curW,curD);blocks.splice(i,1);repack(blocks,dayStartFor(curD));render();toast('Deleted — day reflowed');}
+function removeBlock(i){const blocks=ensure(curW,curD);blocks.splice(i,1);repack(blocks,startFor(curD));render();toast('Deleted — day reflowed');}
 function groupRange(blocks,idx){
   const g=blocks[idx].grp; if(!g)return[idx,idx];
   let a=idx,b=idx;
@@ -627,7 +633,7 @@ function moveBlock(i,dir){
     blocks.splice(ga,gb-ga+1);
     blocks.splice(nb-(gb-ga+1)+1,0,...moving);
   }
-  repack(blocks,dayStartFor(curD));render();
+  repack(blocks,startFor(curD));render();
 }
 function dropMove(from,to){
   const blocks=ensure(curW,curD);
@@ -641,7 +647,7 @@ function dropMove(from,to){
   let idx=blocks.indexOf(anchor);
   if(idx<0)idx=blocks.length; else if(movingDown)idx=idx+1;
   blocks.splice(idx,0,...moving);
-  repack(blocks,dayStartFor(curD));render();toast('Moved — day reflowed');
+  repack(blocks,startFor(curD));render();toast('Moved — day reflowed');
 }
 function addGroup(kind){
   const blocks=ensure(curW,curD);
@@ -656,13 +662,13 @@ function addGroup(kind){
   set.forEach(b=>{b.grp=g;b.gname=gname;});
   let idx=blocks.findIndex(b=>b.cat==='WIND');if(idx<0)idx=blocks.length;
   blocks.splice(idx,0,...set);
-  repack(blocks,dayStartFor(curD));render();toast(gname+' added — drag the ⠿ to place the whole set');
+  repack(blocks,startFor(curD));render();toast(gname+' added — drag the ⠿ to place the whole set');
 }
 function removeGroup(i){
   const blocks=ensure(curW,curD);
   const [ga,gb]=groupRange(blocks,i);
   blocks.splice(ga,gb-ga+1);
-  repack(blocks,dayStartFor(curD));render();toast('Pomodoro set deleted');
+  repack(blocks,startFor(curD));render();toast('Pomodoro set deleted');
 }
 function toggleAdd(){document.getElementById('addform').classList.toggle('show');}
 function confirmAdd(){
@@ -674,7 +680,7 @@ function confirmAdd(){
   let idx=blocks.findIndex(b=>b.cat==='WIND');if(idx<0)idx=blocks.length;
   const nb=B(0,dur,label,cat,false);
   blocks.splice(idx,0,nb);
-  repack(blocks,dayStartFor(curD));
+  repack(blocks,startFor(curD));
   if(locked)nb.locked=true; /* lock it at its flowed time — unlock later to move */
   document.getElementById('af_lock').checked=false;
   document.getElementById('addform').classList.remove('show');
@@ -688,11 +694,11 @@ function renameBlock(i){
 function resetDay(){if(state[curW])delete state[curW][curD];render();toast('Day reset');}
 function resetAll(){
   if(!confirm("Reset everything back to Matthew's default schedule?\n\nThis erases all your changes on this device."))return;
-  state={};bedtimes={};render();toast("Reset to Matthew's default");
+  state={};bedtimes={};starts={};render();toast("Reset to Matthew's default");
 }
 function buildMyOwn(){
   if(!confirm('Clear the schedule and start with a blank week you build yourself?\n\nThis erases the current schedule on this device — you keep your class times by adding them back with the 🔒 Locked class option.'))return;
-  state={};bedtimes={};
+  state={};bedtimes={};starts={};
   WEEKS.forEach((w,i)=>{ if(w.vietnam)return; state[i]={}; for(let d=0;d<7;d++)state[i][d]=[]; });
   render();toast('Cleared — build your own with + Add block');
 }
@@ -725,7 +731,7 @@ function renderCheckin(blocks){
     <h3>Verify ${dt.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'short'})}</h3>
     <p>Your routine adds up to <b>${(study/60).toFixed(1)} study hours</b> — but log what <i>actually</i> happened. <b style="color:var(--gym)">If you touched your phone at any point during a study block, only count half those hours.</b> Edit the number below to be honest, then verify — checkmark for honesty, or a photo of your setup for proof (Strava rules: no photo, no glory).</p>
     <div class="ci-row">
-      <input type="text" id="ci_name" placeholder="Your name" value="${myName}">
+      <input type="text" id="ci_name" placeholder="Your name" value="${myName}" ${accountName?'readonly title="From your account" style="opacity:.85"':''}>
       <div class="grp" style="gap:6px"><span>study hrs</span>
         <input type="number" id="ci_hours" min="0" max="24" step="0.25" value="${(study/60).toFixed(2)}" style="width:66px;background:transparent;border:none;color:var(--electric);font-family:'JetBrains Mono',monospace;font-size:15px">
       </div>
@@ -741,6 +747,7 @@ function editedMins(fallback){
   return Math.round(h*60);
 }
 function grabName(){
+  if(accountName){myName=accountName;return accountName;}
   const inp=document.getElementById('ci_name');
   const n=(inp?inp.value.trim():myName);
   if(!n){toast('Enter your name first');return null;}
@@ -899,14 +906,14 @@ async function renderLb(){
 async function persistLocal(){
   try{
     if(!window.storage)return;
-    await window.storage.set('bp-state',JSON.stringify({state,checkins,myName,bedtimes}));
+    await window.storage.set('bp-state',JSON.stringify({state,checkins,myName,bedtimes,starts}));
   }catch(e){}
 }
 async function loadLocal(){
   try{
     if(!window.storage)return;
     const r=await window.storage.get('bp-state');
-    if(r&&r.value){const o=JSON.parse(r.value);state=o.state||{};checkins=o.checkins||{};myName=o.myName||'';bedtimes=o.bedtimes||{};}
+    if(r&&r.value){const o=JSON.parse(r.value);state=o.state||{};checkins=o.checkins||{};myName=o.myName||'';bedtimes=o.bedtimes||{};starts=o.starts||{};}
   }catch(e){}
 }
 function toast(msg){
@@ -917,7 +924,11 @@ function toast(msg){
 
 /* init */
 document.getElementById('af_cat').innerHTML=PICKABLE.map(c=>`<option value="${c}">${CATS[c].n}</option>`).join('');
-loadLocal().then(render);
+loadLocal().then(()=>{
+  const a=new URLSearchParams(location.search).get('user');
+  if(a&&a.trim()){ accountName=a.trim(); myName=accountName; persistLocal(); }
+  render();
+});
 </script>
 </body>
 </html>
