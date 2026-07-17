@@ -235,6 +235,7 @@ ELEVATOR (10 MIN ROUND TRIP) ALREADY BUILT INTO GYM / BEACH / OUTDOOR BLOCKS
 
 <!-- ================= Acadava backend (Firebase) ================= -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 /* ▼▼▼ PASTE YOUR FIREBASE CONFIG BETWEEN THE BRACES (see setup steps) ▼▼▼ */
@@ -249,11 +250,12 @@ const FIREBASE_CONFIG = {
 };
 /* ▲▲▲ nothing else to change ▲▲▲ */
 
-let db = null;
+let db = null, fbAuth = null;
 try {
   if (FIREBASE_CONFIG && FIREBASE_CONFIG.projectId && window.firebase) {
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
+    fbAuth = firebase.auth();
   }
 } catch (e) { console.warn('Acadava: Firebase not ready —', e); }
 
@@ -902,19 +904,23 @@ async function renderLb(){
   });
 }
 
-/* ================= persistence ================= */
-async function persistLocal(){
-  try{
-    if(!window.storage)return;
-    await window.storage.set('bp-state',JSON.stringify({state,checkins,myName,bedtimes,starts}));
-  }catch(e){}
+/* ================= persistence (device cache + cloud sync when logged in) ================= */
+let currentUid=null, _saveTimer=null;
+function stateBlob(){ return JSON.stringify({state,checkins,myName,bedtimes,starts}); }
+function applyBlob(o){ if(!o)return; state=o.state||{}; checkins=o.checkins||{}; bedtimes=o.bedtimes||{}; starts=o.starts||{}; if(!accountName) myName=o.myName||myName||''; }
+function persistLocal(){
+  try{ if(window.storage) window.storage.set('bp-state',stateBlob()); }catch(e){}          /* fast local cache on this device */
+  if(currentUid && db){ clearTimeout(_saveTimer); _saveTimer=setTimeout(saveCloud,1500); } /* debounced cloud save → syncs across devices */
 }
-async function loadLocal(){
-  try{
-    if(!window.storage)return;
-    const r=await window.storage.get('bp-state');
-    if(r&&r.value){const o=JSON.parse(r.value);state=o.state||{};checkins=o.checkins||{};myName=o.myName||'';bedtimes=o.bedtimes||{};starts=o.starts||{};}
-  }catch(e){}
+async function saveCloud(){
+  if(!currentUid||!db)return;
+  try{ await db.collection('users').doc(currentUid).set({bp:stateBlob()},{merge:true}); }catch(e){}
+}
+async function loadState(){
+  if(currentUid && db){
+    try{ const s=await db.collection('users').doc(currentUid).get(); if(s.exists && s.data() && s.data().bp){ applyBlob(JSON.parse(s.data().bp)); return; } }catch(e){}
+  }
+  try{ if(window.storage){ const r=await window.storage.get('bp-state'); if(r&&r.value) applyBlob(JSON.parse(r.value)); } }catch(e){}
 }
 function toast(msg){
   const t=document.getElementById('toast');
@@ -924,11 +930,22 @@ function toast(msg){
 
 /* init */
 document.getElementById('af_cat').innerHTML=PICKABLE.map(c=>`<option value="${c}">${CATS[c].n}</option>`).join('');
-loadLocal().then(()=>{
-  const a=new URLSearchParams(location.search).get('user');
-  if(a&&a.trim()){ accountName=a.trim(); myName=accountName; persistLocal(); }
-  render();
-});
+(function(){
+  const acct=new URLSearchParams(location.search).get('user');
+  if(acct&&acct.trim()){ accountName=acct.trim(); myName=accountName; }
+  let booted=false;
+  async function boot(){ if(booted)return; booted=true; await loadState(); render(); }
+  if(fbAuth){
+    fbAuth.onAuthStateChanged(async(u)=>{
+      currentUid = u ? u.uid : null;
+      if(!booted){ await boot(); }
+      else { await loadState(); render(); } /* auth changed after load — refresh from cloud */
+    });
+    setTimeout(()=>{ if(!booted) boot(); }, 2500); /* safety: boot from local if auth is slow/blocked */
+  } else {
+    boot();
+  }
+})();
 </script>
 </body>
 </html>
