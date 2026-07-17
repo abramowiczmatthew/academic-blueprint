@@ -112,6 +112,7 @@
   .lbrow.me{border-color:var(--electric);box-shadow:var(--glow)}
   .rank{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--faint);width:28px;text-align:center}
   .rank.r1{color:var(--gold)} .rank.r2{color:#C0C8D8} .rank.r3{color:#D08A4E}
+  .rankbadge{display:flex;align-items:center;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
   .lbname{flex:1;font-weight:600;font-size:14px}
   .lbname small{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--faint);font-weight:400}
   .lbhrs{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--electric);font-weight:700}
@@ -406,7 +407,23 @@ const DAYNAMES=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 /* ================= state ================= */
 let state={}, checkins={}, myName='', curW=0, curD=0, curTab='sched', dragIdx=null, bedtimes={};
-function freshDay(w,d){return WEEKS[w].days[d].map(b=>({...b,id:'b'+(uid++)}));}
+function pomodorizeBlock(b){
+  if(b.cat!=='STUDY' || b.d<60) return [b];
+  const S=50,Bk=10,segs=[]; let rem=b.d;
+  while(rem>0){
+    if(rem<=S+Bk){ segs.push(['STUDY',rem,'Study · '+rem+' min']); rem=0; }
+    else { segs.push(['STUDY',S,'Study · 50 min (phone-free)']); rem-=S; segs.push(['BREAK',Bk,'Break · 10 min']); rem-=Bk; }
+  }
+  if(segs.length<2) return [b];
+  const g='pg'+(uid++),gname='50/10 Pomodoro';
+  return segs.map(s=>{const nb=B(b.t,s[1],s[2],s[0]);nb.grp=g;nb.gname=gname;return nb;});
+}
+function freshDay(w,d){
+  const out=[];
+  WEEKS[w].days[d].forEach(b=>{ pomodorizeBlock({...b,id:'b'+(uid++)}).forEach(p=>out.push(p)); });
+  repack(out,dayStartFor(d));
+  return out;
+}
 function ensure(w,d){ if(!state[w])state[w]={}; if(!state[w][d])state[w][d]=freshDay(w,d); return state[w][d]; }
 function dateOf(w,d){const dt=new Date(WEEKS[w].start+'T00:00:00');dt.setDate(dt.getDate()+d);return dt;}
 function iso(dt){return dt.toISOString().slice(0,10);}
@@ -764,6 +781,39 @@ function currentWeekIdx(){
     if(now>=a&&now<bb)return i;}
   return curW;
 }
+
+/* ---- ranks (R6S-style ladder) ---- */
+const RANK_TIERS=['V','IV','III','II','I'];
+const RANK_TABLE=[
+  {name:'Copper',color:'#B06A3B',metal:'#6E4326'},
+  {name:'Bronze',color:'#C88A3C',metal:'#7E5622'},
+  {name:'Silver',color:'#C3CBD9',metal:'#828B9C'},
+  {name:'Gold',color:'#F0C24B',metal:'#A87F1E'},
+  {name:'Platinum',color:'#5FD6C8',metal:'#2C867C'},
+  {name:'Emerald',color:'#2FD070',metal:'#188046'},
+  {name:'Diamond',color:'#8CC8FF',metal:'#3E77C0'}
+];
+const LADDER=[];
+RANK_TABLE.forEach(r=>RANK_TIERS.forEach(t=>LADDER.push({name:r.name,tier:t,color:r.color,metal:r.metal})));
+LADDER.push({name:'Champion',tier:'',color:'#F0532F',metal:'#9E2A15',champ:true});
+const SILVER3=LADDER.findIndex(s=>s.name==='Silver'&&s.tier==='III');
+let myRankIdx=null,myRankedWeek=null;
+function playerRank(r){return (r&&typeof r.rankIdx==='number')?Math.max(0,Math.min(r.rankIdx,LADDER.length-1)):SILVER3;}
+function rankLabel(idx){const s=LADDER[Math.max(0,Math.min(idx,LADDER.length-1))];return s.name+(s.tier?' '+s.tier:'');}
+function rankBadge(idx){
+  const s=LADDER[Math.max(0,Math.min(idx,LADDER.length-1))];
+  const gid='rg'+idx+Math.random().toString(36).slice(2,6);
+  const inner=s.champ?'♛':s.tier;
+  return `<svg width="32" height="36" viewBox="0 0 34 38" aria-hidden="true">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.color}"/><stop offset="1" stop-color="${s.metal}"/></linearGradient></defs>
+    <path d="M17 1 L32 6 V19 C32 28 25 34 17 37 C9 34 2 28 2 19 V6 Z" fill="url(#${gid})" stroke="rgba(255,255,255,.55)" stroke-width="1.1"/>
+    <text x="17" y="23" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="${s.champ?15:12}" font-weight="700" fill="#0B0F18">${inner}</text>
+  </svg>`;
+}
+function weeklyHoursOf(r,w){
+  const [a,b]=weekRange(w);const bb=new Date(b);bb.setDate(bb.getDate()+1);
+  let s=0;for(const[k,c]of Object.entries(r.days||{})){const d=new Date(k+'T00:00:00');if(d>=a&&d<bb)s+=c.h||0;}return s;
+}
 async function pushLb(){
   try{
     if(!window.storage||!myName)return;
@@ -771,7 +821,7 @@ async function pushLb(){
     const keys=Object.keys(checkins).sort();
     const slim={};keys.forEach((k,i)=>{const c=checkins[k];
       slim[k]={h:c.h,photo:i>=keys.length-7?c.photo:null,p:!!c.photo};});
-    await window.storage.set('lb:'+myName.toLowerCase(),JSON.stringify({name:myName,days:slim,up:Date.now()}),true);
+    await window.storage.set('lb:'+myName.toLowerCase(),JSON.stringify({name:myName,days:slim,up:Date.now(),rankIdx:(myRankIdx==null?SILVER3:myRankIdx),rankedWeek:myRankedWeek}),true);
   }catch(e){/* shared save unavailable — local only */}
 }
 async function renderLb(){
@@ -796,6 +846,26 @@ async function renderLb(){
   if(myName&&!rows.some(r=>r.name.toLowerCase()===myName.toLowerCase())){
     rows.push({name:myName,days:Object.fromEntries(Object.entries(checkins).map(([k,c])=>[k,{h:c.h,photo:c.photo,p:!!c.photo}]))});
   }
+  /* ---- promotion / demotion for the current user over completed weeks ---- */
+  const me=myName?myName.toLowerCase():null;
+  const meRow=rows.find(r=>me&&r.name.toLowerCase()===me);
+  if(meRow){
+    myRankIdx=playerRank(meRow);
+    let lastRanked=(typeof meRow.rankedWeek==='number')?meRow.rankedWeek:(wi-1);
+    let changed=false;
+    for(let w=lastRanked+1;w<wi;w++){
+      const stand=rows.map(r=>({name:r.name.toLowerCase(),hrs:weeklyHoursOf(r,w)})).filter(x=>x.hrs>0).sort((x,y)=>y.hrs-x.hrs);
+      const n=stand.length,myPos=stand.findIndex(x=>x.name===me);
+      if(myPos>=0&&n>=2){
+        const cut=Math.ceil(n/3);
+        if(myPos<cut) myRankIdx=Math.min(LADDER.length-1,myRankIdx+1);
+        else if(myPos>=n-cut) myRankIdx=Math.max(0,myRankIdx-1);
+      }
+      lastRanked=w;changed=true;
+    }
+    myRankedWeek=lastRanked;
+    if(changed){ try{await pushLb();}catch(e){} }
+  }
   const inWeek=k=>{const d=new Date(k+'T00:00:00');const bb=new Date(b);bb.setDate(bb.getDate()+1);return d>=a&&d<bb;};
   const scored=rows.map(r=>{
     const days=r.days||{};
@@ -804,18 +874,21 @@ async function renderLb(){
       tot+=c.h||0;
       if(inWeek(k)){wk+=c.h||0;if(c.photo)proofs.push(c.photo);}
     }
-    return{name:r.name,wk,tot,proofs,verified:Object.keys(days).length};
-  }).sort((x,y)=>y.wk-x.wk);
+    const ridx=(me&&r.name.toLowerCase()===me&&myRankIdx!=null)?myRankIdx:playerRank(r);
+    return{name:r.name,wk,tot,proofs,verified:Object.keys(days).length,rankIdx:ridx};
+  }).sort((x,y)=>y.wk-x.wk||y.tot-x.tot);
+  const note=`<div class="sharednote" style="margin:0 0 12px">🏆 Ranked by <b>study hours this week</b>. Every week (resets Sunday night): top third promote ▲, bottom third drop ▼, the middle holds. Everyone starts <b>Silver III</b>.</div>`;
   if(!scored.length){
-    list.innerHTML=`<div class="empty">No hours logged yet this week.<br>Verify a day from the Schedule tab to get on the board.</div>`;return;
+    list.innerHTML=note+`<div class="empty">No hours logged yet this week.<br>Verify a day from the Schedule tab to get on the board.</div>`;return;
   }
-  list.innerHTML='';
+  list.innerHTML=note;
   scored.forEach((r,i)=>{
     const row=document.createElement('div');
-    row.className='lbrow'+(myName&&r.name.toLowerCase()===myName.toLowerCase()?' me':'');
+    row.className='lbrow'+(me&&r.name.toLowerCase()===me?' me':'');
     row.innerHTML=`
       <div class="rank r${i+1}">${i+1}</div>
-      <div class="lbname">${r.name}<small>${r.verified} days verified · ${(r.tot/60).toFixed(1)} hrs all-time</small></div>
+      <div class="rankbadge" title="${rankLabel(r.rankIdx)}">${rankBadge(r.rankIdx)}</div>
+      <div class="lbname">${r.name}<small>${rankLabel(r.rankIdx)} · ${r.verified} days · ${(r.tot/60).toFixed(1)} h all-time</small></div>
       <div class="lbproofs">${r.proofs.slice(0,3).map(p=>`<img src="${p}">`).join('')}</div>
       <div class="lbhrs">${(r.wk/60).toFixed(1)}<small> hrs</small></div>`;
     list.appendChild(row);
