@@ -71,6 +71,9 @@
   .block.conflict{border-color:var(--danger);box-shadow:0 0 12px rgba(255,92,122,.25)}
   .block.dragging{opacity:.35;transform:scale(.98)}
   .block.dragover{border-top:3px solid var(--electric)}
+  .block.ingroup{border-left-color:var(--electric)}
+  .block.grpchild{margin-left:22px;margin-top:-4px}
+  .block.grpchild::before{content:'';position:absolute;left:-14px;top:-4px;height:26px;width:2px;background:rgba(79,142,247,.45)}
   .drag{cursor:grab;user-select:none;font-family:'JetBrains Mono',monospace;color:var(--faint);position:absolute;right:10px;top:10px;font-size:14px;letter-spacing:2px}
   .block.locked .drag{display:none}
   .tmark{position:absolute;left:-70px;top:10px;width:62px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--faint);line-height:1.5}
@@ -185,6 +188,8 @@
 
   <div class="toolbar">
     <button class="tb primary" onclick="toggleAdd()">+ Add block</button>
+    <button class="tb" onclick="addGroup('50')">+ 50/10 Pomodoro</button>
+    <button class="tb" onclick="addGroup('25')">+ 25/5 Pomodoro</button>
     <button class="tb" onclick="applyAllWeeks()">Apply this week → all weeks</button>
     <button class="tb ghost" onclick="resetDay()">Reset day</button>
     <button class="tb ghost" onclick="resetAll()">Reset to Matthew's default</button>
@@ -473,22 +478,32 @@ function render(){
 
   tl.innerHTML='';
   blocks.forEach((b,i)=>{
+    const grpFirst = b.grp && (i===0 || blocks[i-1].grp!==b.grp);
+    const grpChild = b.grp && !grpFirst;
     const el=document.createElement('div');
-    el.className='block'+(b.locked?' locked':'')+(b.conflict?' conflict':'');
+    el.className='block'+(b.locked?' locked':'')+(b.conflict?' conflict':'')+(b.grp?' ingroup':'')+(grpChild?' grpchild':'');
     el.style.setProperty('--c',CATS[b.cat].c);
     el.dataset.idx=i;
-    if(!b.locked){el.draggable=true;}
-    el.innerHTML=`
-      <div class="tmark"><b>${fmt(b.t)}</b><br>${fmt(b.t+b.d)}</div>
-      <span class="drag" title="Drag to move">⠿</span>
-      <div class="blabel">${b.label}${b.locked?'<span class="lockicon">LOCKED</span>':''}</div>
-      <div class="bmeta">${b.d} min · ${CATS[b.cat].n}</div>
-      ${b.locked?`
-      <div class="ctrl">
+    const canDrag = !b.locked && (!b.grp || grpFirst);
+    if(canDrag){el.draggable=true;}
+    let ctrlHTML;
+    if(b.locked){
+      ctrlHTML=`<div class="ctrl">
         <button class="tb ghost" style="font-size:11px;padding:5px 11px" onclick="renameBlock(${i})">✎ Rename</button>
         <button class="tb ghost" style="font-size:11px;padding:5px 11px" onclick="toggleLock(${i})">🔓 Unlock to move</button>
-      </div>`:`
-      <div class="ctrl">
+      </div>`;
+    } else if(grpFirst){
+      ctrlHTML=`<div class="ctrl">
+        <span class="lockicon" style="color:var(--electric);border-color:rgba(79,142,247,.45)">⟳ ${b.gname} · drag the set</span>
+        <div class="grp"><span>move</span>
+          <button class="btn" onclick="moveBlock(${i},-1)">↑</button>
+          <button class="btn" onclick="moveBlock(${i},1)">↓</button></div>
+        <button class="del" onclick="removeGroup(${i})">delete set</button>
+      </div>`;
+    } else if(grpChild){
+      ctrlHTML='';
+    } else {
+      ctrlHTML=`<div class="ctrl">
         <div class="grp"><span>len</span>
           <button class="btn" onclick="resize(${i},-5)">−</button>
           <button class="btn" onclick="resize(${i},5)">+</button></div>
@@ -501,7 +516,14 @@ function render(){
         <button class="btn" title="Rename" onclick="renameBlock(${i})" style="width:auto;padding:0 6px">✎</button>
         ${b.cat==='CLASS'?`<button class="tb ghost" style="font-size:11px;padding:5px 9px" onclick="toggleLock(${i})">🔒 Lock</button>`:''}
         <button class="del" onclick="removeBlock(${i})">delete</button>
-      </div>`}`;
+      </div>`;
+    }
+    el.innerHTML=`
+      <div class="tmark"><b>${fmt(b.t)}</b><br>${fmt(b.t+b.d)}</div>
+      ${canDrag?'<span class="drag" title="Drag to move">⠿</span>':''}
+      <div class="blabel">${b.label}${b.locked?'<span class="lockicon">LOCKED</span>':''}</div>
+      <div class="bmeta">${b.d} min · ${CATS[b.cat].n}</div>
+      ${ctrlHTML}`;
     /* drag events */
     el.addEventListener('dragstart',e=>{dragIdx=i;el.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
     el.addEventListener('dragend',()=>{dragIdx=null;render();});
@@ -563,19 +585,67 @@ function toggleLock(i){
 }
 function setCat(i,cat){const blocks=ensure(curW,curD);blocks[i].cat=cat;render();}
 function removeBlock(i){const blocks=ensure(curW,curD);blocks.splice(i,1);repack(blocks,dayStartFor(curD));render();toast('Deleted — day reflowed');}
+function groupRange(blocks,idx){
+  const g=blocks[idx].grp; if(!g)return[idx,idx];
+  let a=idx,b=idx;
+  while(a>0&&blocks[a-1].grp===g)a--;
+  while(b<blocks.length-1&&blocks[b+1].grp===g)b++;
+  return[a,b];
+}
 function moveBlock(i,dir){
-  const blocks=ensure(curW,curD);const j=i+dir;
-  if(j<0||j>=blocks.length)return;
-  if(blocks[i].locked||blocks[j].locked){toast('Classes are locked in place');return;}
-  [blocks[i],blocks[j]]=[blocks[j],blocks[i]];
+  const blocks=ensure(curW,curD);
+  if(blocks[i].locked){toast('Classes are locked in place');return;}
+  const [ga,gb]=groupRange(blocks,i);
+  const moving=blocks.slice(ga,gb+1);
+  if(dir<0){
+    if(ga===0)return;
+    if(blocks[ga-1].locked){toast('Classes are locked in place');return;}
+    const [na]=groupRange(blocks,ga-1);
+    blocks.splice(ga,gb-ga+1);
+    blocks.splice(na,0,...moving);
+  }else{
+    if(gb===blocks.length-1)return;
+    if(blocks[gb+1].locked){toast('Classes are locked in place');return;}
+    const [,nb]=groupRange(blocks,gb+1);
+    blocks.splice(ga,gb-ga+1);
+    blocks.splice(nb-(gb-ga+1)+1,0,...moving);
+  }
   repack(blocks,dayStartFor(curD));render();
 }
 function dropMove(from,to){
   const blocks=ensure(curW,curD);
   if(blocks[from].locked){toast('Classes are locked in place');return;}
-  const [b]=blocks.splice(from,1);
-  blocks.splice(to,0,b);
+  const movingDown=from<to;
+  const [ga,gb]=groupRange(blocks,from);
+  const [ta,tb]=groupRange(blocks,to);
+  const anchor=blocks[movingDown?tb:ta];
+  const moving=blocks.slice(ga,gb+1);
+  blocks.splice(ga,gb-ga+1);
+  let idx=blocks.indexOf(anchor);
+  if(idx<0)idx=blocks.length; else if(movingDown)idx=idx+1;
+  blocks.splice(idx,0,...moving);
   repack(blocks,dayStartFor(curD));render();toast('Moved — day reflowed');
+}
+function addGroup(kind){
+  const blocks=ensure(curW,curD);
+  const g='g'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  const gname=kind==='50'?'50/10 Pomodoro':'25/5 Pomodoro';
+  let set;
+  if(kind==='50'){
+    set=[B(0,50,'Study · 50 min (phone-free)','STUDY'),B(0,10,'Break · 10 min','BREAK'),B(0,50,'Study · 50 min (phone-free)','STUDY')];
+  }else{
+    set=[B(0,25,'Study · 25 min','STUDY'),B(0,5,'Break · 5 min','BREAK'),B(0,25,'Study · 25 min','STUDY'),B(0,5,'Break · 5 min','BREAK'),B(0,25,'Study · 25 min','STUDY'),B(0,5,'Break · 5 min','BREAK'),B(0,25,'Study · 25 min','STUDY')];
+  }
+  set.forEach(b=>{b.grp=g;b.gname=gname;});
+  let idx=blocks.findIndex(b=>b.cat==='WIND');if(idx<0)idx=blocks.length;
+  blocks.splice(idx,0,...set);
+  repack(blocks,dayStartFor(curD));render();toast(gname+' added — drag the ⠿ to place the whole set');
+}
+function removeGroup(i){
+  const blocks=ensure(curW,curD);
+  const [ga,gb]=groupRange(blocks,i);
+  blocks.splice(ga,gb-ga+1);
+  repack(blocks,dayStartFor(curD));render();toast('Pomodoro set deleted');
 }
 function toggleAdd(){document.getElementById('addform').classList.toggle('show');}
 function confirmAdd(){
@@ -635,13 +705,23 @@ function renderCheckin(blocks){
     return;
   }
   el.innerHTML=`
-    <h3>Verify this day</h3>
-    <p>Finished ${dt.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'short'})}? Log your <b>${(study/60).toFixed(1)} study hours</b> to the leaderboard — checkmark for honesty, or add a photo of your setup as proof (Strava rules: no photo, no glory).</p>
+    <h3>Verify ${dt.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'short'})}</h3>
+    <p>Your routine adds up to <b>${(study/60).toFixed(1)} study hours</b> — but log what <i>actually</i> happened. <b style="color:var(--gym)">If you touched your phone at any point during a study block, only count half those hours.</b> Edit the number below to be honest, then verify — checkmark for honesty, or a photo of your setup for proof (Strava rules: no photo, no glory).</p>
     <div class="ci-row">
       <input type="text" id="ci_name" placeholder="Your name" value="${myName}">
-      <button class="tb filebtn">📷 Photo proof<input type="file" accept="image/*" onchange="photoCheckin(event,'${key}',${study})"></button>
-      <button class="tb primary" onclick="checkCheckin('${key}',${study})">✓ Verify day (no photo)</button>
+      <div class="grp" style="gap:6px"><span>study hrs</span>
+        <input type="number" id="ci_hours" min="0" max="24" step="0.25" value="${(study/60).toFixed(2)}" style="width:66px;background:transparent;border:none;color:var(--electric);font-family:'JetBrains Mono',monospace;font-size:15px">
+      </div>
+      <button class="tb filebtn">📷 Photo proof<input type="file" accept="image/*" onchange="photoCheckin(event,'${key}')"></button>
+      <button class="tb primary" onclick="checkCheckin('${key}')">✓ Verify day</button>
     </div>`;
+}
+function editedMins(fallback){
+  const inp=document.getElementById('ci_hours');
+  if(!inp)return fallback||0;
+  const h=parseFloat(inp.value);
+  if(isNaN(h)||h<0)return fallback||0;
+  return Math.round(h*60);
 }
 function grabName(){
   const inp=document.getElementById('ci_name');
@@ -649,13 +729,15 @@ function grabName(){
   if(!n){toast('Enter your name first');return null;}
   myName=n;persistLocal();return n;
 }
-async function checkCheckin(key,mins){
+async function checkCheckin(key){
   if(!grabName())return;
+  const mins=editedMins();
   checkins[key]={h:mins,photo:null};
-  await pushLb();persistLocal();render();toast('Day verified ✓ — hours logged');
+  await pushLb();persistLocal();render();toast('Day verified ✓ — '+(mins/60).toFixed(1)+' hrs logged');
 }
-function photoCheckin(ev,key,mins){
+function photoCheckin(ev,key){
   if(!grabName())return;
+  const mins=editedMins();
   const f=ev.target.files[0];if(!f)return;
   const img=new Image(),rd=new FileReader();
   rd.onload=()=>{img.onload=async()=>{
