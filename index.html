@@ -921,6 +921,34 @@
   .auth-foot a { color: var(--muted); cursor: pointer; text-decoration: none; }
   .auth-foot a:hover { color: var(--accent); }
   @media (max-width: 768px) { .nav-auth-link { display: none; } }
+
+  /* ── Intro video ── */
+  .video-hero { position: relative; width: 100%; max-width: 860px; margin: 0 auto; aspect-ratio: 16/9; border-radius: 20px; overflow: hidden; border: 1px solid var(--glass-brd); box-shadow: 0 40px 100px -40px rgba(79,142,247,.6), var(--hi); background: var(--glass-2); }
+  .video-hero iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .video-poster { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; cursor: pointer; background: radial-gradient(120% 100% at 50% 0%, rgba(79,142,247,.18), transparent 60%), var(--glass-2); text-align: center; padding: 24px; }
+  .video-play { width: 78px; height: 78px; border-radius: 50%; background: linear-gradient(180deg,#5C97F9,#3F7AE6); display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 40px rgba(79,142,247,.6); transition: transform .25s; animation: vp-pulse 2.4s ease-in-out infinite; }
+  .video-poster:hover .video-play { transform: scale(1.08); }
+  @keyframes vp-pulse { 0%,100% { box-shadow: 0 12px 40px rgba(79,142,247,.5); } 50% { box-shadow: 0 12px 60px rgba(79,142,247,.85); } }
+  .video-play svg { width: 30px; height: 30px; fill: #fff; margin-left: 5px; }
+  .video-poster .vp-title { font-family: var(--display); font-size: 18px; font-weight: 600; color: var(--white); }
+  .video-poster .vp-sub { font-size: 13px; color: var(--muted); }
+
+  /* ── Five pillars ── */
+  .pillars-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .pillar { background: var(--glass); border: 1px solid var(--glass-brd); border-radius: 16px; padding: 24px 18px; text-align: left; backdrop-filter: blur(14px) saturate(140%); position: relative; box-shadow: var(--hi); }
+  .pillar:hover { transform: translateY(-6px); border-color: rgba(122,171,255,.45); box-shadow: 0 24px 55px -30px rgba(79,142,247,.5), var(--hi); }
+  .pillar-num { font-family: var(--display); font-size: 34px; font-weight: 700; color: var(--accent); line-height: 1; margin-bottom: 12px; text-shadow: 0 0 22px rgba(79,142,247,.55); }
+  .pillar h3 { font-size: 16px; margin-bottom: 8px; }
+  .pillar p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .pillar-badge { display: inline-block; margin-top: 12px; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--amber); background: rgba(245,166,35,.1); border: 1px solid rgba(245,166,35,.25); padding: 3px 8px; border-radius: 20px; }
+  .pillar.ak-reveal { filter: blur(10px); transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1), filter .8s cubic-bezier(.16,1,.3,1), border-color .3s, box-shadow .3s; }
+  .pillar.ak-in { filter: blur(0); }
+  .pillars-grid .pillar:nth-child(2) { transition-delay: .1s; }
+  .pillars-grid .pillar:nth-child(3) { transition-delay: .2s; }
+  .pillars-grid .pillar:nth-child(4) { transition-delay: .3s; }
+  .pillars-grid .pillar:nth-child(5) { transition-delay: .4s; }
+  @media (max-width: 900px) { .pillars-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .pillars-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -972,10 +1000,8 @@
     <a onclick="showPage('quiz')">Take the Quiz</a>
     <a onclick="showPage('dashboard')">My Dashboard</a>
     <a onclick="showPage('acadava')">Acadava</a>
-    <a id="navAuthLinkM" onclick="onAuthClick()">Log in</a>
   </div>
   <button class="btn-nav" onclick="showPage('quiz')">Discover What’s Holding You Back →</button>
-  <a class="nav-auth-link" id="navAuthLink" onclick="onAuthClick()">Log in</a>
   <button class="nav-burger" aria-label="Open menu" onclick="toggleMenu()">☰</button>
 </nav>
 
@@ -1008,16 +1034,69 @@
   <!-- HERO -->
   <div class="section" style="padding-top: 100px;">
     <div class="container" style="text-align: center;">
-      <div class="hero-eyebrow">The System Behind a 98–100% Average</div>
-      <h1>Stop studying harder.<br><em style="color: var(--accent);">Start winning smarter.</em></h1>
-      <p class="hero-sub" style="margin-top: 24px;">Most students grind for average results. The Academic Blueprint stacks proven advantages across sleep, dopamine, focus, and memory into one system that compounds your grades without compounding your stress.</p>
+      <div class="hero-eyebrow">First in class, grade 5 → 12 · Now ranked 4th in dental school</div>
+      <h1>Get the grades.<br><em style="color: var(--accent);">And keep your life.</em></h1>
+      <p class="hero-sub" style="margin-top: 24px;">Studying isn't one skill — it's five, and most students only ever work on one. The Academic Blueprint stacks all five into a system built to fit a real schedule: training, friends, and a life included.</p>
       <div class="hero-cta" style="margin-top: 40px;">
-        <button class="btn-primary large" onclick="showPage('quiz')">Discover What’s Holding You Back →</button>
-        <button class="btn-secondary" onclick="showPage('sales')">View the Course</button>
+        <button class="btn-primary large" onclick="scrollToVideo()">▶&nbsp; Watch the 2-min intro</button>
+        <button class="btn-secondary" onclick="showPage('quiz')">Take the free quiz</button>
       </div>
       <div class="hero-proof">
         <span class="stars">★★★★★</span>
-        <span style="color: var(--muted); font-size: 14px; margin-left: 6px;">Join students already using the system</span>
+        <span style="color: var(--muted); font-size: 14px; margin-left: 6px;">The exact system behind a 98–100% average</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTRO VIDEO -->
+  <div class="section" id="videoSection" style="padding-top: 10px;">
+    <div class="container">
+      <div style="text-align:center;margin-bottom:10px;"><span class="tag">Watch this first · 2 min</span></div>
+      <h2 style="text-align:center;max-width:640px;margin:0 auto 10px;">One hour of studying <em style="color:var(--accent)">isn't always one hour.</em></h2>
+      <p style="text-align:center;color:var(--muted);max-width:560px;margin:0 auto 28px;">Locked in, one hour beats three distracted ones. Watch the intro, then take the quiz to find which of your five pillars is leaking hours.</p>
+      <div class="video-hero" id="landingVideo"></div>
+      <div style="text-align:center;margin-top:30px;">
+        <button class="btn-primary large" onclick="showPage('quiz')">Now take the free quiz →</button>
+        <p style="font-size:13px;color:var(--muted);margin-top:12px;">3 minutes · personalised score · free lesson unlocked at the end</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- THE FIVE PILLARS -->
+  <div class="section" style="padding-top: 40px;">
+    <div class="container-wide">
+      <div style="text-align:center;margin-bottom:44px;">
+        <div class="tag">The five pillars</div>
+        <h2 style="max-width:660px;margin:12px auto 10px;">Most students only work on <em style="color:var(--accent)">one</em> of these.</h2>
+        <p style="color:var(--muted);max-width:560px;margin:0 auto;">Study technique is just pillar #3 — the only one most students ever touch. Work all five and the results compound.</p>
+      </div>
+      <div class="pillars-grid">
+        <div class="pillar">
+          <div class="pillar-num">1</div>
+          <h3>Focus</h3>
+          <p>Whether you can sit down, actually start, and stay locked in once you have.</p>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">2</div>
+          <h3>Your setup</h3>
+          <p>Sleep, food, training, your desk, your light — and the timing of all of it. Full power or half.</p>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">3</div>
+          <h3>Your methods</h3>
+          <p>Whether anything you study actually sticks.</p>
+          <span class="pillar-badge">The only one most touch</span>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">4</div>
+          <h3>The long game</h3>
+          <p>Whether you keep it going for years — not just two good weeks.</p>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">5</div>
+          <h3>Exam execution</h3>
+          <p>Getting the marks for what you already knew when it counts.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -1088,15 +1167,15 @@
         <div class="story-text">
           <div class="tag">The story behind the system</div>
           <h2>I didn't have a higher IQ.<br>I had a better <em style="color: var(--accent);">system.</em></h2>
-          <p style="margin-top: 20px;">I maintained a 98–100% average from grade 5 through 12 — not by sitting at a desk all day, but by stacking small advantages that compounded over time. I had volleyball 4 days a week and still made time for lifting and having a life.</p>
-          <p>Getting into dental school straight from high school and ranking 4th in my class wasn't about working harder than everyone else. It was about optimizing sleep, dopamine, focus, and study methods into one system that made every hour count more.</p>
-          <p>That's what this course teaches. Not study hacks. A system.</p>
+          <p style="margin-top: 20px;">School 8:30 to 3:30. Volleyball until 6, four days a week. Dinner, then study until 11. That was my day for years — and I finished first in my class every single year from grade 5 to 12, with a 98–100% average.</p>
+          <p>Now I'm in dental school, where I finished 4th out of ~150 — and everyone in that room was top of their own class before they got there. For a good chunk of that year I was in a sling, typing with one hand. I also manage type 1 diabetes, a background job that never switches off. I've been to Fiji, I'm in Vietnam next month, I train and I have a life — and I've never pulled an all-nighter.</p>
+          <p>The most common thing I hear is "I don't have time." I don't buy it — you have about the same time I had, and nobody ever showed you what to do with it. That's what this is. Not study hacks. A system: <em style="color:var(--accent);font-style:normal;font-weight:600;">get the grades, and keep your life.</em></p>
           <div class="story-pills">
-            <span class="pill highlight">98–100% avg</span>
-            <span class="pill highlight">Dental school, ranked 4th in class</span>
+            <span class="pill highlight">1st in class, grade 5–12</span>
+            <span class="pill highlight">4th / ~150 in dental school</span>
+            <span class="pill">Type 1 diabetic</span>
+            <span class="pill">Never an all-nighter</span>
             <span class="pill">Volleyball 4×/week</span>
-            <span class="pill">Regular lifter</span>
-            <span class="pill">Normal IQ</span>
           </div>
         </div>
       </div>
@@ -1895,7 +1974,6 @@ if (auth) {
 }
 
 function showPage(id) {
-  if (id === 'acadava' && !currentUser) { pendingPage = 'acadava'; openAuth('login', 'Log in or create a free account to use Acadava.'); return; }
   document.querySelector('nav').classList.remove('open'); // close mobile menu on navigate
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
@@ -1908,6 +1986,19 @@ function showPage(id) {
     const uname = (userProfile && userProfile.username) || (currentUser && currentUser.displayName) || '';
     const want = 'blueprint_app.html' + (uname ? ('?user=' + encodeURIComponent(uname)) : '');
     if (f && f.getAttribute('src') !== want) f.setAttribute('src', want);
+  }
+}
+
+// ── LANDING INTRO VIDEO ──
+// ▼ Paste your YouTube video ID here (the part after "v=" or "youtu.be/"), e.g. "dQw4w9WgXcQ"
+const LANDING_VIDEO_ID = '';
+function scrollToVideo() { const el = document.getElementById('videoSection'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+function renderLandingVideo() {
+  const el = document.getElementById('landingVideo'); if (!el) return;
+  if (LANDING_VIDEO_ID) {
+    el.innerHTML = '<iframe src="https://www.youtube.com/embed/' + LANDING_VIDEO_ID + '" title="The Academic Blueprint — Intro" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+  } else {
+    el.innerHTML = '<div class="video-poster" onclick="showPage(\'quiz\')"><div class="video-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><div class="vp-title">Intro video coming soon</div><div class="vp-sub">Paste your YouTube link into the code — until then, tap here to jump to the quiz</div></div>';
   }
 }
 
@@ -2152,13 +2243,13 @@ const questions = [
 // Which question indices are GAP questions (scored)
 const gapIndices = questions.reduce((acc, q, i) => { if (q.type === 'gap') acc.push(i); return acc; }, []);
 
+// Quiz results mapped to the 5 pillars from the landing page + intro video
 const categories = [
-  {name: "Morning System & Dopamine", color: "#4F8EF7", gapIdxs: [0,1]},
-  {name: "Sleep & Recovery",          color: "#7AABFF", gapIdxs: [2,3,4]},
-  {name: "Cognitive Supplementation", color: "#34C97A", gapIdxs: [5,6]},
-  {name: "Study Methods",             color: "#F5A623", gapIdxs: [7,8,9,10]},
-  {name: "Physical Optimization",     color: "#B87EFF", gapIdxs: [11,12,13]},
-  {name: "Strategy & Exam Execution", color: "#F05252", gapIdxs: [14,15,16,17]}
+  {name: "1 · Focus & Starting", color: "#4F8EF7", gapIdxs: [0,1]},
+  {name: "2 · Your Setup",       color: "#7AABFF", gapIdxs: [2,3,4,5,6,11,12]},
+  {name: "3 · Study Methods",    color: "#F5A623", gapIdxs: [7,8,9,10,13]},
+  {name: "4 · The Long Game",    color: "#B87EFF", gapIdxs: [14]},
+  {name: "5 · Exam Execution",   color: "#F05252", gapIdxs: [15,16,17]}
 ];
 // gapIdxs refer to position within gapIndices array, not questions array
 
@@ -2450,7 +2541,7 @@ function abQuizDone() {
 function isLessonUnlocked(n) {
   if (n === 1) return true;          // Intro — free preview for everyone
   if (n === 2) return abQuizDone();  // Wake Up & Flow Step 1 — free once the quiz is done
-  return isPaid();                   // Everything else — unlocked once the account is on the paid plan
+  return false;                      // Everything else — part of the paid course
 }
 
 function ytEmbed(id, title) {
@@ -2514,6 +2605,7 @@ function renderFreeLesson() {
     '.quiz-teaser', '.story-grid', '.modules-grid > *', '.compound-visual',
     '.testimonials-grid > *', '.guarantee-box', '.footer-cta', '.card',
     '.pricing-grid > *', '.key-point', '.teaser-box', '.stats-grid > *',
+    '.pillar', '.video-hero',
     '.section > .container > h2', '.section > .container > .tag'
   ].join(',');
 
@@ -2533,6 +2625,28 @@ function renderFreeLesson() {
     });
   }
   armReveal(document);
+
+  // 1b) Render the landing intro video (placeholder until a real YouTube ID is set).
+  if (typeof renderLandingVideo === 'function') renderLandingVideo();
+
+  // 1c) Count-up animation for the stats when the strip scrolls into view.
+  function animateCounts() {
+    document.querySelectorAll('.stat-num').forEach(function (el) {
+      if (el.dataset.done) return;
+      var m = el.textContent.match(/^(\d+)/); if (!m) return;
+      var target = parseInt(m[1], 10), suffix = el.innerHTML.slice(m[1].length), cur = 0, step = Math.max(1, Math.ceil(target / 35));
+      var t = setInterval(function () { cur = Math.min(target, cur + step); el.innerHTML = cur + suffix; if (cur >= target) { clearInterval(t); el.dataset.done = '1'; } }, 26);
+    });
+  }
+  if (!reduce && 'IntersectionObserver' in window) {
+    var strip = document.querySelector('.stats-strip');
+    if (strip) {
+      var so = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { animateCounts(); so.disconnect(); } });
+      }, { threshold: 0.3 });
+      so.observe(strip);
+    }
+  }
 
   // 2) Card tilt: subtle 3D response to the pointer (AuthKit's "alive" cards).
   if (!reduce && window.matchMedia('(hover:hover)').matches) {
