@@ -317,6 +317,123 @@
   .module-card h3 { font-size: 15px; margin-bottom: 8px; }
   .module-card p { font-size: 13px; color: var(--muted); line-height: 1.55; }
 
+  /* ── COMPOUND STACK — scroll-driven graphic ── */
+  .cmp-lede { max-width: 640px; margin: 0 auto; color: var(--muted); font-size: 17px; line-height: 1.7; }
+  .cmp-lede + .cmp-lede { margin-top: 16px; }
+  .cmp-lede strong { color: var(--white); font-weight: 600; }
+
+  .cmp-track { position: relative; }
+  .cmp-track.js-anim { height: 320vh; }
+
+  .cmp-sticky { padding: 40px 0; }
+  .js-anim .cmp-sticky {
+    position: sticky; top: 0;
+    height: 100vh; height: 100svh;
+    display: flex; align-items: center;
+    padding: 0;
+  }
+
+  .cmp-stage {
+    max-width: 1000px; margin: 0 auto; padding: 0 24px; width: 100%;
+    display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 48px; align-items: center;
+  }
+
+  /* narration */
+  .cmp-beats { position: relative; min-height: 132px; }
+  .cmp-beat {
+    position: absolute; inset: 0 0 auto 0; margin: 0;
+    font-family: var(--display); font-weight: 600; letter-spacing: -0.02em;
+    font-size: clamp(1.35rem, 2.4vw, 2rem); line-height: 1.22; color: var(--white);
+    opacity: 0; transform: translateY(12px);
+    transition: opacity .45s ease, transform .45s cubic-bezier(.16,1,.3,1);
+  }
+  .cmp-beat.is-on { opacity: 1; transform: none; }
+  .cmp-beat em { color: var(--accent); font-style: normal; }
+
+  .cmp-now { margin-top: 24px; display: flex; align-items: baseline; gap: 10px; min-height: 22px; }
+  .cmp-now-lab {
+    font-family: var(--display); font-size: 10px; font-weight: 700;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+  }
+  .cmp-now-name {
+    font-size: 15px; font-weight: 600; color: var(--accent2);
+    transition: opacity .3s ease;
+  }
+
+  /* chart */
+  .cmp-chart { position: relative; }
+  .cmp-plot { position: relative; height: 320px; }
+  .cmp-bars {
+    position: absolute; inset: 0;
+    display: flex; align-items: flex-end; gap: 10px;
+  }
+  .cmp-bar {
+    flex: 1 1 0; min-width: 0;
+    height: calc(var(--p) * 1%);
+    border-radius: 5px 5px 2px 2px;
+    background: linear-gradient(180deg, var(--accent2), var(--accent) 55%, rgba(79,142,247,.35));
+    filter: brightness(calc(.60 + var(--i) * .055));
+    box-shadow: 0 0 calc(4px + var(--i) * 2px) rgba(79,142,247,.30);
+    transform-origin: bottom center;
+  }
+  .js-anim .cmp-bar {
+    transform: scaleY(0); opacity: 0;
+    transition: transform .55s cubic-bezier(.16,1,.3,1), opacity .3s ease;
+  }
+  .js-anim .cmp-bar.on { transform: none; opacity: 1; }
+
+  .cmp-curve { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .cmp-curve polyline { fill: none; stroke: var(--accent2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
+  .js-anim .cmp-curve { clip-path: inset(0 100% 0 0); transition: clip-path .55s cubic-bezier(.16,1,.3,1); }
+
+  .cmp-axis { height: 1px; background: var(--border); margin-top: 0; }
+
+  .cmp-mark {
+    position: absolute; left: 0; right: 0; bottom: 19%;
+    border-top: 1px dashed rgba(255,255,255,0.20);
+    pointer-events: none;
+  }
+  .cmp-mark span {
+    position: absolute; left: 0; top: -22px;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    color: var(--muted); background: var(--bg); padding: 0 8px 0 0;
+    white-space: nowrap;
+  }
+
+  .cmp-cap {
+    position: absolute; left: 0; right: 0; bottom: 97%;
+    border-top: 1px solid rgba(79,142,247,.55);
+    opacity: 0; transform: translateY(6px);
+    transition: opacity .5s ease, transform .5s cubic-bezier(.16,1,.3,1);
+    pointer-events: none;
+  }
+  .cmp-cap.is-on { opacity: 1; transform: none; }
+  .cmp-cap span {
+    position: absolute; right: 0; top: -23px;
+    font-family: var(--display); font-size: 12px; font-weight: 700;
+    letter-spacing: .04em; color: var(--accent2);
+    background: var(--bg); padding: 0 6px;
+  }
+
+  @media (max-width: 860px) {
+    .cmp-track.js-anim { height: 260vh; }
+    .cmp-stage { grid-template-columns: 1fr; gap: 28px; }
+    .cmp-beats { min-height: 96px; }
+    .cmp-now { margin-top: 16px; }
+    .cmp-plot { height: 220px; }
+    .cmp-bars { gap: 6px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cmp-track.js-anim { height: auto; }
+    .js-anim .cmp-sticky { position: static; height: auto; padding: 40px 0; }
+    .cmp-beats { min-height: 0; }
+    .cmp-beat { position: static; opacity: 1; transform: none; transition: none; }
+    .cmp-beat:not(:last-of-type) { display: none; }
+    .js-anim .cmp-bar { transform: none; opacity: 1; transition: none; }
+    .cmp-cap { opacity: 1; transform: none; transition: none; }
+  }
+
   /* Compound advantage */
   .compound-visual {
     background: var(--bg2); border: 1px solid var(--border);
@@ -1229,12 +1346,72 @@
     </div>
   </div>
 
+  <!-- ═══ THE COMPOUND ADVANTAGE — philosophy + stacking graphic ═══ -->
+  <div class="section" style="padding-bottom: 20px;">
+    <div class="container" style="text-align: center;">
+      <div class="tag">The compound advantage</div>
+      <h2 style="max-width: 660px; margin: 12px auto 22px;">Nothing in here works <em style="color:var(--accent);font-style:normal;">on its own.</em></h2>
+      <p class="cmp-lede">Most people think success comes from one big thing — being smart, working harder, or finding the perfect study hack. That's not how I got top grades.</p>
+      <p class="cmp-lede">What made the difference was stacking a lot of small habits that each gave me a tiny advantage. On their own they're easy to overlook. Combine optimised sleep, controlled dopamine, systems that kill procrastination, higher daily energy, and study methods built for memory and exams — and they start to <strong>compound.</strong></p>
+    </div>
+  </div>
+
+  <div class="cmp-track" id="cmpTrack">
+    <div class="cmp-sticky">
+      <div class="cmp-stage">
+
+        <div class="cmp-narr">
+          <div class="cmp-beats">
+            <p class="cmp-beat is-on" data-min="0">One habit on its own barely moves anything.</p>
+            <p class="cmp-beat" data-min="1">Most students manage about three.</p>
+            <p class="cmp-beat" data-min="4">Now each one is working <em>on top of</em> the last.</p>
+            <p class="cmp-beat" data-min="7">They don't add up.<br>They <em>compound.</em></p>
+          </div>
+          <div class="cmp-now">
+            <span class="cmp-now-lab">Stacking</span>
+            <span class="cmp-now-name" id="cmpNow">—</span>
+          </div>
+        </div>
+
+        <div class="cmp-chart">
+          <div class="cmp-plot">
+            <div class="cmp-bars" id="cmpBars">
+              <div class="cmp-bar" style="--p:5;  --i:0" data-name="Study methods"></div>
+              <div class="cmp-bar" style="--p:11; --i:1" data-name="Starting early"></div>
+              <div class="cmp-bar" style="--p:19; --i:2" data-name="Sleep"></div>
+              <div class="cmp-bar" style="--p:28; --i:3" data-name="Morning focus"></div>
+              <div class="cmp-bar" style="--p:40; --i:4" data-name="Dopamine control"></div>
+              <div class="cmp-bar" style="--p:55; --i:5" data-name="Nutrition"></div>
+              <div class="cmp-bar" style="--p:74; --i:6" data-name="Training timing"></div>
+              <div class="cmp-bar" style="--p:97; --i:7" data-name="Exam execution"></div>
+            </div>
+            <svg class="cmp-curve" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <polyline id="cmpCurve" vector-effect="non-scaling-stroke"
+                points="6.25,95 18.75,89 31.25,81 43.75,72 56.25,60 68.75,45 81.25,26 93.75,3" />
+            </svg>
+            <div class="cmp-mark"><span>Where most students top out</span></div>
+            <div class="cmp-cap" id="cmpCap"><span>98–100% average</span></div>
+          </div>
+          <div class="cmp-axis"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="padding-top: 30px; padding-bottom: 40px;">
+    <div class="container" style="text-align: center;">
+      <p class="cmp-lede">Some courses teach study techniques. Others talk about productivity. Some talk about sleep or focus. Almost nobody combines all of it into one system built to improve academic performance.</p>
+      <p class="cmp-lede">Just like compound interest, a lot of small advantages compound into large results over time. So don't brush off the small things. <strong>The students who win long-term are the ones who stack small edges until they've built a system that makes them hard to beat.</strong></p>
+    </div>
+  </div>
+
   <!-- COMPOUND ADVANTAGE -->
   <div class="section">
     <div class="container">
       <div class="compound-visual">
-        <div class="tag">The compound advantage</div>
-        <h2 style="margin-bottom: 8px;">Most students do 3 of these.<br>This course teaches all of them.</h2>
+        <div class="tag">Your turn</div>
+        <h2 style="margin-bottom: 8px;">Which of these are you <em style="color:var(--accent);font-style:normal;">actually</em> doing?</h2>
         <p style="color: var(--muted); margin-bottom: 0;">Check which ones you're currently doing:</p>
         <div class="advantage-list">
           <div class="advantage-item">
@@ -2691,6 +2868,65 @@ function renderFreeLesson() {
       requestAnimationFrame(function () { armReveal(document.getElementById('page-' + id)); });
     };
   }
+})();
+
+// ═══════════════════════════════════════════
+//  COMPOUND STACK — scroll-driven graphic
+// ═══════════════════════════════════════════
+(function () {
+  var track = document.getElementById('cmpTrack');
+  if (!track) return;
+
+  var bars  = [].slice.call(document.querySelectorAll('#cmpBars .cmp-bar'));
+  var beats = [].slice.call(track.querySelectorAll('.cmp-beat'));
+  var nowEl = document.getElementById('cmpNow');
+  var capEl = document.getElementById('cmpCap');
+  var curve = track.querySelector('.cmp-curve');
+  var TOTAL = bars.length;
+
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Reduced motion: CSS already shows the finished state. Just fill in the label.
+  if (reduce || !TOTAL) { if (nowEl) nowEl.textContent = 'All of it'; return; }
+
+  track.classList.add('js-anim');
+
+  var last = -1, ticking = false;
+
+  function paint() {
+    ticking = false;
+
+    var span = track.offsetHeight - window.innerHeight;
+    if (span <= 0) return;
+
+    var p = Math.min(1, Math.max(0, -track.getBoundingClientRect().top / span));
+    var t = Math.min(1, Math.max(0, (p - 0.08) / 0.74));   // lead-in, then hold at the end
+    var n = Math.min(TOTAL, Math.floor(t * (TOTAL + 1)));
+
+    if (n === last) return;
+    last = n;
+
+    bars.forEach(function (b, i) { b.classList.toggle('on', i < n); });
+
+    // Curve is revealed left→right, ending at the centre of the newest bar.
+    var pct = n === 0 ? 0 : (n - 0.5) * (100 / TOTAL);
+    curve.style.clipPath = 'inset(0 ' + (100 - pct).toFixed(2) + '% 0 0)';
+
+    var beat = beats[0];
+    beats.forEach(function (el) { if (+el.getAttribute('data-min') <= n) beat = el; });
+    beats.forEach(function (el) { el.classList.toggle('is-on', el === beat); });
+
+    nowEl.textContent = n === 0 ? '—' : bars[n - 1].getAttribute('data-name');
+    capEl.classList.toggle('is-on', n === TOTAL);
+  }
+
+  function onScroll() {
+    if (!ticking) { ticking = true; requestAnimationFrame(paint); }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+  paint();
 })();
 </script>
 </body>
